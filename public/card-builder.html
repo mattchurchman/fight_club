@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UFC Card Entry</title>
+    <link rel="stylesheet" href="/css/card-builder.css">
+</head>
+<body>
+    <div id="navbar-container"></div>
+    <script src="/js/navbar.js"></script>
+    <div class="container">
+        <div class="card-entry-panel">
+            <h1>UFC Card Entry</h1>
+            
+            <div class="form-section">
+                <h3>Event Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventTitle">Event Title</label>
+                        <input type="text" id="eventTitle" placeholder="UFC 313" required>
+                        <div id="eventTitle-error" class="error"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventDate">Event Date</label>
+                        <input type="text" id="eventDate" placeholder="March 15, 2025" required>
+                        <div id="eventDate-error" class="error"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3>Add New Fight</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="weightClass">Weight Class</label>
+                        <input type="text" id="weightClass" placeholder="Lightweight" required>
+                        <div id="weightClass-error" class="error"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="isMainEvent">
+                            <input type="checkbox" id="isMainEvent"> Main Event
+                        </label>
+                    </div>
+                </div>
+                
+                <h4>Fighter 1</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fighter1Name">Name</label>
+                        <input type="text" id="fighter1Name" placeholder="Conor McGregor" required>
+                        <div id="fighter1Name-error" class="error"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="fighter1Record">Record</label>
+                        <input type="text" id="fighter1Record" placeholder="22-6-0" required>
+                        <div id="fighter1Record-error" class="error"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="fighter1Odds">Odds</label>
+                        <input type="number" id="fighter1Odds" placeholder="-150" required>
+                        <div id="fighter1Odds-error" class="error"></div>
+                    </div>
+                </div>
+                
+                <h4>Fighter 2</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fighter2Name">Name</label>
+                        <input type="text" id="fighter2Name" placeholder="Dustin Poirier" required>
+                        <div id="fighter2Name-error" class="error"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="fighter2Record">Record</label>
+                        <input type="text" id="fighter2Record" placeholder="29-8-0" required>
+                        <div id="fighter2Record-error" class="error"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="fighter2Odds">Odds</label>
+                        <input type="number" id="fighter2Odds" placeholder="+130" required>
+                        <div id="fighter2Odds-error" class="error"></div>
+                    </div>
+                </div>
+                
+                <h4>Method of Victory Odds</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="koOdds">KO/TKO</label>
+                        <input type="number" id="koOdds" placeholder="2.5" step="0.1" min="1" required>
+                        <div id="koOdds-error" class="error"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="subOdds">Submission</label>
+                        <input type="number" id="subOdds" placeholder="3.0" step="0.1" min="1" required>
+                        <div id="subOdds-error" class="error"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="decOdds">Decision</label>
+                        <input type="number" id="decOdds" placeholder="1.8" step="0.1" min="1" required>
+                        <div id="decOdds-error" class="error"></div>
+                    </div>
+                </div>
+                
+                <button id="addFightBtn" class="primary">Add Fight</button>
+            </div>
+            
+            <h3>Fight Card</h3>
+            <div id="fightList" class="fight-list">
+                <!-- Fights will be displayed here -->
+                <div class="fight-item" style="text-align: center; color: #888;">
+                    No fights added yet. Add a fight to get started.
+                </div>
+            </div>
+            
+            <div class="json-output">
+                <h3>Fight Card JSON</h3>
+                <textarea id="jsonOutput" readonly></textarea>
+                <div class="actions-row">
+                    <button id="copyJsonBtn" class="copy-btn">Copy JSON</button>
+                    <button id="saveCardBtn" class="primary">Save to Database</button>
+                </div>
+            </div>
+
+            <div id="loadCardSection" class="form-section" style="margin-top: 20px;">
+                <h3>Saved Fight Cards</h3>
+                <button id="loadCardsBtn">Load Saved Cards</button>
+                <div id="loadCardList">
+                    <!-- Saved cards will load here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Data structure to hold the fight card
+        let fightCard = {
+            title: "",
+            date: "",
+            fights: []
+        };
+        
+        // Counter for fight IDs
+        let fightIdCounter = 1;
+        
+        // DOM elements
+        const eventTitleInput = document.getElementById('eventTitle');
+        const eventDateInput = document.getElementById('eventDate');
+        const weightClassInput = document.getElementById('weightClass');
+        const isMainEventCheckbox = document.getElementById('isMainEvent');
+        const fighter1NameInput = document.getElementById('fighter1Name');
+        const fighter1RecordInput = document.getElementById('fighter1Record');
+        const fighter1OddsInput = document.getElementById('fighter1Odds');
+        const fighter2NameInput = document.getElementById('fighter2Name');
+        const fighter2RecordInput = document.getElementById('fighter2Record');
+        const fighter2OddsInput = document.getElementById('fighter2Odds');
+        const koOddsInput = document.getElementById('koOdds');
+        const subOddsInput = document.getElementById('subOdds');
+        const decOddsInput = document.getElementById('decOdds');
+        const addFightBtn = document.getElementById('addFightBtn');
+        const fightListContainer = document.getElementById('fightList');
+        const jsonOutputArea = document.getElementById('jsonOutput');
+        const copyJsonBtn = document.getElementById('copyJsonBtn');
+        const saveCardBtn = document.getElementById('saveCardBtn');
+        const loadCardsBtn = document.getElementById('loadCardsBtn');
+        const loadCardList = document.getElementById('loadCardList');
+        const notification = document.getElementById('notification');
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            eventTitleInput.addEventListener('input', updateEventInfo);
+            eventDateInput.addEventListener('input', updateEventInfo);
+            addFightBtn.addEventListener('click', addFight);
+            copyJsonBtn.addEventListener('click', copyJson);
+            saveCardBtn.addEventListener('click', saveCardToDatabase);
+            loadCardsBtn.addEventListener('click', loadSavedCards);
+        });
+        
+        // Update event info
+        function updateEventInfo() {
+            fightCard.title = eventTitleInput.value;
+            fightCard.date = eventDateInput.value;
+            updateJsonOutput();
+        }
+        
+        // Validate a field
+        function validateField(inputId, errorMessage) {
+            const input = document.getElementById(inputId);
+            const errorElement = document.getElementById(`${inputId}-error`);
+            
+            if (!input.value) {
+                errorElement.textContent = errorMessage || 'This field is required.';
+                return false;
+            } else {
+                errorElement.textContent = '';
+                return true;
+            }
+        }
+        
+        // Validate number field
+        function validateNumberField(inputId, errorMessage) {
+            const input = document.getElementById(inputId);
+            const errorElement = document.getElementById(`${inputId}-error`);
+            const value = parseFloat(input.value);
+            
+            if (!input.value || isNaN(value)) {
+                errorElement.textContent = errorMessage || 'Please enter a valid number.';
+                return false;
+            } else {
+                errorElement.textContent = '';
+                return true;
+            }
+        }
+        
+        // Validate record format (e.g., "22-6-0")
+        function validateRecordFormat(inputId) {
+            const input = document.getElementById(inputId);
+            const errorElement = document.getElementById(`${inputId}-error`);
+            const recordRegex = /^\d+-\d+-\d+(\s+\d+NC)?$/;
+            
+            if (!recordRegex.test(input.value)) {
+                errorElement.textContent = 'Please use format: W-L-D (e.g., 22-6-0 or 20-1-1 1NC)';
+                return false;
+            } else {
+                errorElement.textContent = '';
+                return true;
+            }
+        }
+        
+        // Add a new fight
+        function addFight() {
+            // Validate event info
+            const isEventValid = validateField('eventTitle', 'Please enter an event title.') && 
+                               validateField('eventDate', 'Please enter an event date.');
+            
+            // Validate fight info
+            const isWeightClassValid = validateField('weightClass', 'Please enter a weight class.');
+            const isFighter1NameValid = validateField('fighter1Name', 'Please enter Fighter 1 name.');
+            const isFighter1RecordValid = validateField('fighter1Record', 'Please enter Fighter 1 record.') && 
+                                       validateRecordFormat('fighter1Record');
+            const isFighter1OddsValid = validateNumberField('fighter1Odds', 'Please enter valid odds for Fighter 1.');
+            const isFighter2NameValid = validateField('fighter2Name', 'Please enter Fighter 2 name.');
+            const isFighter2RecordValid = validateField('fighter2Record', 'Please enter Fighter 2 record.') && 
+                                       validateRecordFormat('fighter2Record');
+            const isFighter2OddsValid = validateNumberField('fighter2Odds', 'Please enter valid odds for Fighter 2.');
+            
+            // Validate method odds
+            const isKoOddsValid = validateNumberField('koOdds', 'Please enter valid KO/TKO odds.');
+            const isSubOddsValid = validateNumberField('subOdds', 'Please enter valid Submission odds.');
+            const isDecOddsValid = validateNumberField('decOdds', 'Please enter valid Decision odds.');
+            
+            // Check if all validations passed
+            if (!isEventValid || !isWeightClassValid || !isFighter1NameValid || !isFighter1RecordValid || !isFighter1OddsValid ||
+                !isFighter2NameValid || !isFighter2RecordValid || !isFighter2OddsValid || !isKoOddsValid || !isSubOddsValid || !isDecOddsValid) {
+                return;
+            }
+            
+            // Create the fight object
+            const newFight = {
+                id: fightIdCounter++,
+                weight: weightClassInput.value,
+                isMain: isMainEventCheckbox.checked,
+                fighter1: {
+                    name: fighter1NameInput.value,
+                    record: fighter1RecordInput.value,
+                    odds: parseInt(fighter1OddsInput.value)
+                },
+                fighter2: {
+                    name: fighter2NameInput.value,
+                    record: fighter2RecordInput.value,
+                    odds: parseInt(fighter2OddsInput.value)
+                },
+                victoryMethods: {
+                    ko: parseFloat(koOddsInput.value),
+                    sub: parseFloat(subOddsInput.value),
+                    dec: parseFloat(decOddsInput.value)
+                }
+            };
+            
+            // Add to fight card
+            fightCard.fights.push(newFight);
+            
+            // Update UI
+            renderFightList();
+            updateJsonOutput();
+            
+            // Clear form fields
+            weightClassInput.value = '';
+            isMainEventCheckbox.checked = false;
+            fighter1NameInput.value = '';
+            fighter1RecordInput.value = '';
+            fighter1OddsInput.value = '';
+            fighter2NameInput.value = '';
+            fighter2RecordInput.value = '';
+            fighter2OddsInput.value = '';
+            koOddsInput.value = '';
+            subOddsInput.value = '';
+            decOddsInput.value = '';
+            
+            // Clear error messages
+            document.querySelectorAll('.error').forEach(el => el.textContent = '');
+        }
+        
+        // Render the fight list
+        function renderFightList() {
+            fightListContainer.innerHTML = '';
+            
+            if (fightCard.fights.length === 0) {
+                fightListContainer.innerHTML = `
+                    <div class="fight-item" style="text-align: center; color: #888;">
+                        No fights added yet. Add a fight to get started.
+                    </div>
+                `;
+                return;
+            }
+            
+            fightCard.fights.forEach((fight, index) => {
+                const fightItem = document.createElement('div');
+                fightItem.className = 'fight-item';
+                
+                // Calculate odds display
+                const odds1Display = fight.fighter1.odds > 0 ? `+${fight.fighter1.odds}` : fight.fighter1.odds;
+                const odds2Display = fight.fighter2.odds > 0 ? `+${fight.fighter2.odds}` : fight.fighter2.odds;
+                
+                fightItem.innerHTML = `
+                    <div class="fight-item-details">
+                        <strong>${fight.weight} ${fight.isMain ? '- Main Event' : ''}</strong><br>
+                        ${fight.fighter1.name} (${odds1Display}) vs ${fight.fighter2.name} (${odds2Display})
+                    </div>
+                    <div class="fight-actions">
+                        <button class="edit-btn" data-index="${index}">Edit</button>
+                        <button class="delete-btn" data-index="${index}">Delete</button>
+                    </div>
+                `;
+                
+                fightListContainer.appendChild(fightItem);
+            });
+            
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    editFight(parseInt(this.dataset.index));
+                });
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    deleteFight(parseInt(this.dataset.index));
+                });
+            });
+        }
+        
+        // Edit a fight
+        function editFight(index) {
+            const fight = fightCard.fights[index];
+            
+            // Populate form fields
+            weightClassInput.value = fight.weight;
+            isMainEventCheckbox.checked = fight.isMain;
+            fighter1NameInput.value = fight.fighter1.name;
+            fighter1RecordInput.value = fight.fighter1.record;
+            fighter1OddsInput.value = fight.fighter1.odds;
+            fighter2NameInput.value = fight.fighter2.name;
+            fighter2RecordInput.value = fight.fighter2.record;
+            fighter2OddsInput.value = fight.fighter2.odds;
+            koOddsInput.value = fight.victoryMethods.ko;
+            subOddsInput.value = fight.victoryMethods.sub;
+            decOddsInput.value = fight.victoryMethods.dec;
+            
+            // Remove the fight
+            fightCard.fights.splice(index, 1);
+            
+            // Update UI
+            renderFightList();
+            updateJsonOutput();
+            
+            // Scroll to form
+            document.querySelector('.form-section:nth-child(2)').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Delete a fight
+        function deleteFight(index) {
+            if (confirm('Are you sure you want to delete this fight?')) {
+                fightCard.fights.splice(index, 1);
+                renderFightList();
+                updateJsonOutput();
+            }
+        }
+        
+        // Update JSON output
+        function updateJsonOutput() {
+            // Format the JSON for the betting panel
+            const formattedFights = fightCard.fights.map(fight => {
+                return {
+                    id: fight.id,
+                    weight: fight.weight,
+                    isMain: fight.isMain,
+                    fighter1: {
+                        name: fight.fighter1.name,
+                        record: fight.fighter1.record,
+                        odds: fight.fighter1.odds
+                    },
+                    fighter2: {
+                        name: fight.fighter2.name,
+                        record: fight.fighter2.record,
+                        odds: fight.fighter2.odds
+                    },
+                    victoryMethods: {
+                        ko: fight.victoryMethods.ko,
+                        sub: fight.victoryMethods.sub,
+                        dec: fight.victoryMethods.dec
+                    }
+                };
+            });
+            
+            // Create output object
+            const output = {
+                title: fightCard.title,
+                date: fightCard.date,
+                fights: formattedFights
+            };
+            
+            jsonOutputArea.value = JSON.stringify(output, null, 2);
+        }
+        
+        // Copy JSON to clipboard
+        function copyJson() {
+            jsonOutputArea.select();
+            document.execCommand('copy');
+            
+            // Visual feedback
+            const originalText = copyJsonBtn.textContent;
+            copyJsonBtn.textContent = 'Copied!';
+            setTimeout(() => {
+                copyJsonBtn.textContent = originalText;
+            }, 2000);
+        }
+        
+        // Save card to database
+        function saveCardToDatabase() {
+            if (fightCard.title === "" || fightCard.date === "") {
+                showNotification("Please enter an event title and date", "error");
+                return;
+            }
+            
+            if (fightCard.fights.length === 0) {
+                showNotification("Please add at least one fight to the card", "error");
+                return;
+            }
+            
+            console.log('fightCard: ', fightCard, typeof(fightCard))
+
+            // Make API call to save the fight card
+            fetch('/api/cardsCreate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(fightCard),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to save card');
+                }
+                return response.json();
+            })
+            .then(data => {
+                showNotification("Fight card saved successfully", "success");
+                // If the card was saved with an ID, update our local ID
+                if (data.id) {
+                    fightCard.id = data.id;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification("Error saving card: " + error.message, "error");
+            });
+        }
+        
+        // Load saved cards from the database
+        function loadSavedCards() {
+            fetch('/api/cards')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch cards');
+                    }
+                    return response.json();
+                })
+                .then(cards => {
+                    renderSavedCards(cards);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification("Error loading cards: " + error.message, "error");
+                });
+        }
+        
+        // Render saved cards
+        function renderSavedCards(cards) {
+            loadCardList.innerHTML = '';
+            
+            if (cards.length === 0) {
+                loadCardList.innerHTML = '<p>No saved cards found.</p>';
+                return;
+            }
+            
+            cards.forEach(card => {
+                const cardItem = document.createElement('div');
+                cardItem.className = 'saved-card-item';
+                
+                cardItem.innerHTML = `
+                    <div>
+                        <strong>${card.title}</strong> (${card.date})
+                        <br>
+                        ${card.fights.length} fights
+                    </div>
+                    <div>
+                        <button class="load-card-btn" data-id="${card.id}">Load</button>
+                        <button class="delete-card-btn" data-id="${card.id}">Delete</button>
+                    </div>
+                `;
+                
+                loadCardList.appendChild(cardItem);
+            });
+            
+            // Add event listeners
+            document.querySelectorAll('.load-card-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    loadCard(this.dataset.id);
+                });
+            });
+            
+            document.querySelectorAll('.delete-card-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    deleteCard(this.dataset.id);
+                });
+            });
+        }
+        
+        // Load a specific card
+        function loadCard(id) {
+            fetch(`/api/cards/${id}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch card');
+                    }
+                    return response.json();
+                })
+                .then(card => {
+                    // Set the fight card data
+                    fightCard = card;
+                    
+                    // Find highest fight ID to update the counter
+                    if (fightCard.fights.length > 0) {
+                        const maxId = Math.max(...fightCard.fights.map(fight => fight.id));
+                        fightIdCounter = maxId + 1;
+                    }
+                    
+                    // Update the UI
+                    eventTitleInput.value = fightCard.title;
+                    eventDateInput.value = fightCard.date;
+                    renderFightList();
+                    updateJsonOutput();
+                    
+                    showNotification("Card loaded successfully", "success");
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification("Error loading card: " + error.message, "error");
+                });
+        }
+        
+        // Delete a saved card
+        function deleteCard(id) {
+            if (confirm('Are you sure you want to delete this saved card?')) {
+                fetch(`/api/cards/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to delete card');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    showNotification("Card deleted successfully", "success");
+                    loadSavedCards(); // Refresh the list
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification("Error deleting card: " + error.message, "error");
+                });
+            }
+        }
+        
+        // Show notification
+        function showNotification(message, type) {
+            const notificationElement = document.getElementById('notification');
+            notificationElement.textContent = message;
+            notificationElement.className = `notification ${type}`;
+            notificationElement.classList.add('show');
+            
+            setTimeout(() => {
+                notificationElement.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

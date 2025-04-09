@@ -1,0 +1,144 @@
+* {
+    box-sizing: border-box;
+    font-family: 'Roboto', Arial, sans-serif;
+}
+body {
+    margin: 0;
+    padding: 20px;
+    background-color: #1a1a1a;
+    color: white;
+}
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.betting-panel {
+    background-color: #2a2a2a;
+    border-radius: 8px;
+    padding: 20px;
+}
+h1, h2, h3 {
+    color: #ffcc00;
+    margin-top: 0;
+}
+.tokens-info {
+    background-color: #333;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+.fight-card {
+    margin-bottom: 30px;
+}
+.fight {
+    background-color: #333;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+.fighters {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+.fighter {
+    text-align: center;
+    width: 45%;
+}
+.fighter img {
+    max-width: 50%;
+    height: auto;
+    /*width: 350px;
+    height: 254px;
+    border-radius: 50%;*/
+    background-color: #55555500;
+    margin-bottom: 5px;
+}
+.fighter-name {
+    font-weight: bold;
+    font-size: 16px;
+}
+.fighter-record {
+    font-size: 12px;
+    color: #aaa;
+}
+.odds {
+    font-size: 14px;
+    color: #6bff6b;
+    margin-top: 5px;
+}
+.odds.positive {
+    color: #ff6b6b;
+}
+.betting-controls {
+    margin-top: 15px;
+}
+.token-slider {
+    width: 100%;
+    margin: 10px 0;
+}
+.token-value {
+    font-weight: bold;
+    color: #ffcc00;
+}
+.method-selection, .confidence-selection, .bleed-selection {
+    margin-top: 10px;
+}
+select, button, textarea {
+    background-color: #444;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+select:hover, button:hover {
+    background-color: #555;
+}
+button.primary {
+    background-color: #ffcc00;
+    color: #000;
+    font-weight: bold;
+    margin-top: 20px;
+    padding: 10px 20px;
+}
+button.primary:hover {
+    background-color: #e6b800;
+}
+.error {
+    color: #ff6b6b;
+    margin-top: 10px;
+}
+.json-output {
+    margin-top: 20px;
+}
+textarea {
+    width: 100%;
+    height: 150px;
+    margin-top: 10px;
+    font-family: monospace;
+    resize: vertical;
+}
+.copy-btn {
+    margin-top: 10px;
+}
+.json-input {
+    margin-bottom: 20px;
+}
+.data-paste-section {
+    background-color: #333;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+
+.data-paste-section {
+    background-color: #333;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}

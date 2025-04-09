@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UFC Results Entry</title>
+    <link rel="stylesheet" href="/css/results-entry.css">
+</head>
+<body>
+    <div id="navbar-container"></div>
+    <script src="/js/navbar.js"></script>
+    <div class="container">
+        <div class="results-panel">
+            <h1>UFC Results Entry</h1>
+            
+            <div id="card-info">
+                <h2 id="card-title">Loading card information...</h2>
+                <p id="card-date"></p>
+            </div>
+            
+            <h3>Fight Outcomes</h3>
+            <div id="simulator">
+                <!-- Fight outcome simulators will be loaded here -->
+            </div>
+            
+            <button id="save-results" class="primary" disabled>Save Results</button>
+            <div id="save-status"></div>
+        </div>
+    </div>
+
+    <script>
+        // Victory methods
+        const victoryMethods = [
+            { id: 'ko', name: 'KO/TKO'},
+            { id: 'sub', name: 'Submission'},
+            { id: 'dec', name: 'Decision'}
+        ];
+
+        // State variables
+        let cardId = null;
+        let fights = [];
+        let simulatedResults = {};
+        let completedFights = {};
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fetch the latest fight card
+            fetchLatestCard();
+            
+            // Event listener for save button
+            document.getElementById('save-results').addEventListener('click', saveResults);
+        });
+        
+        // Fetch the latest fight card from the API
+        function fetchLatestCard() {
+            fetch('/api/cards/latest')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch latest card');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    cardId = data.id;
+                    fights = data.fights;
+                    
+                    // Update card info
+                    document.getElementById('card-title').textContent = data.title;
+                    document.getElementById('card-date').textContent = new Date(data.date).toLocaleDateString();
+                    
+                    // Initialize simulated results with default values
+                    fights.forEach(fight => {
+                        simulatedResults[fight.id] = {
+                            winner: 1,
+                            method: 'ko',
+                            firstBleed: 1
+                        };
+                        completedFights[fight.id] = false;
+                    });
+                    
+                    // Create the fight outcome simulator
+                    createSimulator();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('card-title').textContent = 'Error loading card';
+                    document.getElementById('card-info').innerHTML += `<p class="error">${error.message}</p>`;
+                });
+        }
+        
+        // Create the fight outcome simulator
+        function createSimulator() {
+            const simulator = document.getElementById('simulator');
+            simulator.innerHTML = '';
+            
+            fights.forEach(fight => {
+                const simFight = document.createElement('div');
+                simFight.className = 'fight';
+                
+                simFight.innerHTML = `
+                    <h4>${fight.fighter1.name} vs ${fight.fighter2.name}</h4>
+                    <div>
+                        <label>Winner: </label>
+                        <select class="sim-winner" data-fight-id="${fight.id}">
+                            <option value="1">${fight.fighter1.name}</option>
+                            <option value="2">${fight.fighter2.name}</option>
+                        </select>
+                        
+                        <label>Method: </label>
+                        <select class="sim-method" data-fight-id="${fight.id}">
+                            ${victoryMethods.map(method => 
+                                `<option value="${method.id}">${method.name}</option>`
+                            ).join('')}
+                        </select>
+                        
+                        <label>First to Bleed: </label>
+                        <select class="sim-bleed" data-fight-id="${fight.id}">
+                            <option value="1">${fight.fighter1.name}</option>
+                            <option value="2">${fight.fighter2.name}</option>
+                            <option value="none">No Blood</option>
+                        </select>
+                        
+                        <label class="completed-label">
+                            <input type="checkbox" class="fight-completed" data-fight-id="${fight.id}">
+                            Completed
+                        </label>
+                    </div>
+                `;
+                
+                simulator.appendChild(simFight);
+            });
+            
+            // Add event listeners
+            document.querySelectorAll('.sim-winner').forEach(select => {
+                select.addEventListener('change', function() {
+                    const fightId = parseInt(this.dataset.fightId);
+                    simulatedResults[fightId].winner = parseInt(this.value);
+                });
+            });
+            
+            document.querySelectorAll('.sim-method').forEach(select => {
+                select.addEventListener('change', function() {
+                    const fightId = parseInt(this.dataset.fightId);
+                    simulatedResults[fightId].method = this.value;
+                });
+            });
+            
+            document.querySelectorAll('.sim-bleed').forEach(select => {
+                select.addEventListener('change', function() {
+                    const fightId = parseInt(this.dataset.fightId);
+                    simulatedResults[fightId].firstBleed = this.value === 'none' ? null : parseInt(this.value);
+                });
+            });
+            
+            document.querySelectorAll('.fight-completed').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const fightId = parseInt(this.dataset.fightId);
+                    completedFights[fightId] = this.checked;
+                    updateSaveButtonState();
+                });
+            });
+        }
+        
+        // Update save button disabled state based on completed fights
+        function updateSaveButtonState() {
+            const saveButton = document.getElementById('save-results');
+            const hasCompletedFights = Object.values(completedFights).some(completed => completed);
+            saveButton.disabled = !hasCompletedFights;
+        }
+        
+        // Save results to the server
+        function saveResults() {
+            const saveStatus = document.getElementById('save-status');
+            saveStatus.textContent = 'Saving...';
+            
+            // Filter out incomplete fights
+            const filteredResults = {};
+            for (const fightId in simulatedResults) {
+                if (completedFights[fightId]) {
+                    filteredResults[fightId] = simulatedResults[fightId];
+                }
+            }
+            
+            // Create the data to send
+            const resultsData = {
+                cardId: cardId,
+                results: filteredResults
+            };
+            
+            // Send the data to the server
+            fetch('/api/cards/update-results', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(resultsData),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to save results');
+                }
+                return response.json();
+            })
+            .then(data => {
+                saveStatus.textContent = 'Results saved successfully!';
+                saveStatus.className = 'success';
+                
+                // New: Calculate and update betting results
+                calculateAndUpdateBettingResults(filteredResults);
+                
+                // Clear status message after 3 seconds
+                setTimeout(() => {
+                    saveStatus.textContent = '';
+                    saveStatus.className = '';
+                }, 3000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                saveStatus.textContent = 'Error saving results: ' + error.message;
+                saveStatus.className = 'error';
+            });
+        }
+        
+        // New function: Calculate and update betting results
+        function calculateAndUpdateBettingResults(fightResults) {
+            // Get all user bets for this card
+            fetch(`/api/bets/card/${cardId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch user bets');
+                    }
+                    return response.json();
+                })
+                .then(userBetsData => {
+                    if (!userBetsData || userBetsData.length === 0) {
+                        console.log('No bets found for this card');
+                        return;
+                    }
+                    
+                    // For each user's bet
+                    const betUpdatePromises = userBetsData.map(betRecord => {
+                        const betId = betRecord.id;
+                        const betData = JSON.parse(JSON.stringify(betRecord.json_data));
+                        
+                        // Calculate results for this bet
+                        const betResults = calculateBetResults(betData, fightResults);
+                        
+                        // Update the bet_results column
+                        return updateBetResults(betId, betResults);
+                    });
+                    
+                    // Wait for all updates to complete
+                    return Promise.all(betUpdatePromises);
+                })
+                .then(() => {
+                    console.log('All betting results calculated and updated successfully');
+                })
+                .catch(error => {
+                    console.error('Error calculating betting results:', error);
+                });
+        }
+        
+        // New function: Calculate betting results for a single user
+        function calculateBetResults(betData, fightResults) {
+            // Extract betting information
+            const userBets = betData.userBets || {};
+            const confidenceOrder = betData.confidenceOrder || [];
+            const bleedPick = betData.bleedPick || { fightId: null, fighterId: null };
+            
+            let totalWinnings = 0;
+            const resultsDetails = {};
+            
+            // Calculate confidence multipliers
+            const winMultipliers = [0.5, 0.4, 0.3, 0.2, 0.1];
+            const lossMultipliers = [-2, -1, 0, 0, 0];
+            
+            // For each fight in confidence order
+            confidenceOrder.forEach((fightId, confidenceRank) => {
+                // Skip if no result available for this fight
+                if (!fightResults[fightId]) {
+                    return;
+                }
+                
+                const fight = fights.find(f => f.id === fightId);
+                const bet = userBets[fightId];
+                const result = fightResults[fightId];
+                
+                if (!bet || !fight) {
+                    return;
+                }
+                
+                // Determine if bet is correct
+                const betWon = bet.fighter === result.winner;
+                const methodCorrect = bet.method === result.method;
+                const bleedCorrect = bleedPick.fightId === fightId && 
+                                    bleedPick.fighterId === result.firstBleed;
+                
+                // Calculate payout
+                let payout = 0;
+                let winBonus = 0;
+                let methodBonus = 0;
+                let confBonus = 0;
+                let bleedBonus = 0;
+
+                if (betWon) {
+                    // Base payout based on odds
+                    const fighter = bet.fighter === 1 ? fight.fighter1 : fight.fighter2;
+                    let odds = fighter.odds;
+                    
+                    // Convert American odds to decimal odds
+                    let decimalOdds;
+                    if (odds > 0) {
+                        decimalOdds = (odds / 100) + 1;
+                    } else {
+                        decimalOdds = (100 / Math.abs(odds)) + 1;
+                    }
+                    
+                    winBonus = bet.tokens * decimalOdds;
+                    payout = bet.tokens * decimalOdds;
+                    
+                    // Apply confidence win multiplier
+                    const confMultiplier = winMultipliers[confidenceRank];
+                    confBonus = bet.tokens * confMultiplier;
+                    payout += confBonus;
+                    
+                    // Method of victory bonus
+                    if (methodCorrect) {
+                        const methodType = victoryMethods.find(m => m.id === bet.method);
+                        let methodOdds = fight.victoryMethods[methodType.id];
+                        // Convert American odds to decimal odds
+                        let decimalMethodOdds;
+                        if (methodOdds > 0) {
+                            decimalMethodOdds = (methodOdds / 100) + 1;
+                        } else {
+                            decimalMethodOdds = (100 / Math.abs(methodOdds)) + 1;
+                        }
+                        methodBonus = bet.tokens * decimalMethodOdds;
+                        payout += methodBonus;
+                    }
+                    
+                    // First to bleed bonus
+                    if (bleedCorrect) {
+                        bleedBonus = payout * 0.25;
+                        payout += bleedBonus;
+                    }
+                } else {
+                    // Loss - apply penalty for top 2 confidence picks
+                    if (confidenceRank === 0 || confidenceRank === 1) {
+                        const lossMultiplier = lossMultipliers[confidenceRank];
+                        const lossPenalty = bet.tokens * Math.abs(lossMultiplier);
+                        payout = -lossPenalty;
+                    }
+                }
+                
+                // Save result details
+                resultsDetails[fightId] = {
+                    winner: result.winner,
+                    method: result.method,
+                    firstBleed: result.firstBleed,
+                    payout: payout,
+                    betWon: betWon,
+                    methodCorrect: methodCorrect,
+                    bleedCorrect: bleedCorrect, 
+                    winBonus: parseInt(winBonus),
+                    methodBonus: parseInt(methodBonus),
+                    confBonus: parseInt(confBonus),
+                    bleedBonus: parseInt(bleedBonus)
+                };
+                
+                // Add to total
+                totalWinnings += payout;
+            });
+            
+            // Return complete results
+            return {
+                cardResults: fightResults,
+                resultsDetails: resultsDetails,
+                totalWinnings: totalWinnings
+            };
+        }
+        
+        // New function: Update a specific bet with calculated results
+        function updateBetResults(betId, betResults) {
+            return fetch('/api/bets/update-results', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    betId: betId,
+                    betResults: betResults
+                }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to update betting results for bet ID ${betId}`);
+                }
+                return response.json();
+            });
+        }
+    </script>
+</body>
+</html>

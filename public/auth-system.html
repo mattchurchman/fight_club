@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MMA Fan Authentication</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div id="navbar-container"></div>
+    <script src="/js/navbar.js"></script>
+    <div class="container">
+        <div class="auth-panel">
+            <!-- Login Form -->
+            <div id="loginForm">
+                <h1>Login</h1>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" placeholder="your@email.com" required>
+                        <div id="loginEmail-error" class="error"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <div class="password-field">
+                            <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility('loginPassword', 'loginPasswordToggle')">
+                                Show
+                            </button>
+                        </div>
+                        <div id="loginPassword-error" class="error"></div>
+                    </div>
+                    <div class="remember-me">
+                        <input type="checkbox" id="rememberMe">
+                        <label for="rememberMe">Remember me</label>
+                    </div>
+                    <button id="loginBtn" class="primary" onclick="login()">Login</button>
+                    <div class="actions-row">
+                        <span class="forgot-password" onclick="showResetPasswordForm()">Forgot Password?</span>
+                        <span class="switch-form" onclick="showRegisterForm()">Create Account</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Register Form -->
+            <div id="registerForm" class="hidden">
+                <h1>Create Account</h1>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="registerUsername">Username</label>
+                        <input type="text" id="registerUsername" placeholder="Choose a username" required>
+                        <div id="registerUsername-error" class="error"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" placeholder="your@email.com" required>
+                        <div id="registerEmail-error" class="error"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Password</label>
+                        <div class="password-field">
+                            <input type="password" id="registerPassword" placeholder="Create a password" required onkeyup="checkPasswordStrength()">
+                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility('registerPassword', 'registerPasswordToggle')">
+                                Show
+                            </button>
+                        </div>
+                        <div class="strength-meter">
+                            <div id="strengthMeter" class="strength-meter-fill"></div>
+                        </div>
+                        <div class="password-requirements">
+                            Password must be at least 8 characters with letters, numbers, and special characters
+                        </div>
+                        <div id="registerPassword-error" class="error"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <div class="password-field">
+                            <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
+                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility('confirmPassword', 'confirmPasswordToggle')">
+                                Show
+                            </button>
+                        </div>
+                        <div id="confirmPassword-error" class="error"></div>
+                    </div>
+                    <button id="registerBtn" class="primary" onclick="register()">Create Account</button>
+                    <div class="actions-row">
+                        <span></span>
+                        <span class="switch-form" onclick="showLoginForm()">Already have an account? Login</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reset Password Form -->
+            <div id="resetPasswordForm" class="hidden">
+                <h1>Reset Password</h1>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="resetEmail">Email</label>
+                        <input type="email" id="resetEmail" placeholder="your@email.com" required>
+                        <div id="resetEmail-error" class="error"></div>
+                    </div>
+                    <button id="resetBtn" class="primary" onclick="resetPassword()">Send Reset Link</button>
+                    <div class="actions-row">
+                        <span class="switch-form" onclick="showLoginForm()">Back to Login</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Set New Password Form (After Reset) -->
+            <div id="newPasswordForm" class="hidden">
+                <h1>Set New Password</h1>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <div class="password-field">
+                            <input type="password" id="newPassword" placeholder="Create a new password" required onkeyup="checkNewPasswordStrength()">
+                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility('newPassword', 'newPasswordToggle')">
+                                Show
+                            </button>
+                        </div>
+                        <div class="strength-meter">
+                            <div id="newPasswordStrengthMeter" class="strength-meter-fill"></div>
+                        </div>
+                        <div class="password-requirements">
+                            Password must be at least 8 characters with letters, numbers, and special characters
+                        </div>
+                        <div id="newPassword-error" class="error"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmNewPassword">Confirm New Password</label>
+                        <div class="password-field">
+                            <input type="password" id="confirmNewPassword" placeholder="Confirm your new password" required>
+                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility('confirmNewPassword', 'confirmNewPasswordToggle')">
+                                Show
+                            </button>
+                        </div>
+                        <div id="confirmNewPassword-error" class="error"></div>
+                    </div>
+                    <button id="saveNewPasswordBtn" class="primary" onclick="saveNewPassword()">Save New Password</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // DOM Elements for Form Switching
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const resetPasswordForm = document.getElementById('resetPasswordForm');
+        const newPasswordForm = document.getElementById('newPasswordForm');
+        
+        // Form Toggle Functions
+        function showLoginForm() {
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+            resetPasswordForm.classList.add('hidden');
+            newPasswordForm.classList.add('hidden');
+            clearAllErrors();
+        }
+        
+        function showRegisterForm() {
+            loginForm.classList.add('hidden');
+            registerForm.classList.remove('hidden');
+            resetPasswordForm.classList.add('hidden');
+            newPasswordForm.classList.add('hidden');
+            clearAllErrors();
+        }
+        
+        function showResetPasswordForm() {
+            loginForm.classList.add('hidden');
+            registerForm.classList.add('hidden');
+            resetPasswordForm.classList.remove('hidden');
+            newPasswordForm.classList.add('hidden');
+            clearAllErrors();
+        }
+        
+        function showNewPasswordForm() {
+            loginForm.classList.add('hidden');
+            registerForm.classList.add('hidden');
+            resetPasswordForm.classList.add('hidden');
+            newPasswordForm.classList.remove('hidden');
+            clearAllErrors();
+        }
+        
+        // Password Visibility Toggle
+        function togglePasswordVisibility(inputId, toggleId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleButton = event.currentTarget;
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleButton.textContent = 'Hide';
+            } else {
+                passwordInput.type = 'password';
+                toggleButton.textContent = 'Show';
+            }
+        }
+        
+        // Validation Functions
+        function validateEmail(email) {
+            const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            return re.test(String(email).toLowerCase());
+        }
+        
+        function validatePassword(password) {
+            return typeof password === 'string' && password.length === 4;
+        }
+
+        /*
+        function validatePassword(password) {
+            // At least 8 characters, must include a letter, a number, and a special character
+            const re = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+            return re.test(String(password));
+        }*/
+        
+        function validateField(inputId, errorMessage) {
+            const input = document.getElementById(inputId);
+            const errorElement = document.getElementById(`${inputId}-error`);
+            
+            if (!input.value.trim()) {
+                errorElement.textContent = errorMessage || 'This field is required.';
+                return false;
+            } else {
+                errorElement.textContent = '';
+                return true;
+            }
+        }
+        
+        function validateEmailField(inputId) {
+            const input = document.getElementById(inputId);
+            const errorElement = document.getElementById(`${inputId}-error`);
+            
+            if (!input.value.trim()) {
+                errorElement.textContent = 'Email is required.';
+                return false;
+            } else if (!validateEmail(input.value)) {
+                errorElement.textContent = 'Please enter a valid email address.';
+                return false;
+            } else {
+                errorElement.textContent = '';
+                return true;
+            }
+        }
+        
+        function validatePasswordField(inputId) {
+            const input = document.getElementById(inputId);
+            const errorElement = document.getElementById(`${inputId}-error`);
+            
+            if (!input.value) {
+                errorElement.textContent = 'Password is required.';
+                return false;
+            } else if (!validatePassword(input.value)) {
+                errorElement.textContent = 'Password must be at least 4 characters long.';
+                return false;
+            } else {
+                errorElement.textContent = '';
+                return true;
+            }
+        }
+        
+        function validatePasswordsMatch(password1Id, password2Id) {
+            const password1 = document.getElementById(password1Id).value;
+            const password2 = document.getElementById(password2Id).value;
+            const errorElement = document.getElementById(`${password2Id}-error`);
+            
+            if (password1 !== password2) {
+                errorElement.textContent = 'Passwords do not match.';
+                return false;
+            } else {
+                errorElement.textContent = '';
+                return true;
+            }
+        }
+        
+        function clearAllErrors() {
+            document.querySelectorAll('.error').forEach(el => el.textContent = '');
+        }
+        
+        // Password Strength Meter
+        function checkPasswordStrength() {
+            const password = document.getElementById('registerPassword').value;
+            const strengthMeter = document.getElementById('strengthMeter');
+            
+            // Reset classes
+            strengthMeter.classList.remove('weak', 'medium', 'strong');
+            
+            if (!password) {
+                strengthMeter.style.width = '0%';
+                return;
+            }
+            
+            // Check strength
+            let strength = 0;
+            
+            // Length check
+            if (password.length >= 8) strength += 1;
+            
+            // Character type checks
+            if (/[A-Z]/.test(password)) strength += 1;
+            if (/[a-z]/.test(password)) strength += 1;
+            if (/\d/.test(password)) strength += 1;
+            if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+            
+            // Set meter visual
+            if (strength <= 2) {
+                strengthMeter.classList.add('weak');
+            } else if (strength <= 4) {
+                strengthMeter.classList.add('medium');
+            } else {
+                strengthMeter.classList.add('strong');
+            }
+        }
+        
+        function checkNewPasswordStrength() {
+            const password = document.getElementById('newPassword').value;
+            const strengthMeter = document.getElementById('newPasswordStrengthMeter');
+            
+            // Reset classes
+            strengthMeter.classList.remove('weak', 'medium', 'strong');
+            
+            if (!password) {
+                strengthMeter.style.width = '0%';
+                return;
+            }
+            
+            // Check strength
+            let strength = 0;
+            
+            // Length check
+            if (password.length >= 8) strength += 1;
+            
+            // Character type checks
+            if (/[A-Z]/.test(password)) strength += 1;
+            if (/[a-z]/.test(password)) strength += 1;
+            if (/\d/.test(password)) strength += 1;
+            if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+            
+            // Set meter visual
+            if (strength <= 2) {
+                strengthMeter.classList.add('weak');
+            } else if (strength <= 4) {
+                strengthMeter.classList.add('medium');
+            } else {
+                strengthMeter.classList.add('strong');
+            }
+        }
+        
+        // Auth Functions
+        function login() {
+            const isEmailValid = validateEmailField('loginEmail');
+            const isPasswordValid = validateField('loginPassword', 'Password is required.');
+            
+            if (!isEmailValid || !isPasswordValid) {
+                return;
+            }
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+            
+            // API call to login
+            fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email,
+                    password,
+                    rememberMe
+                }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Invalid email or password');
+                }
+                return response.json();
+            })
+            .then(data => {
+                showNotification("Login successful", "success");
+
+                // Redirect to main page after successful login
+                setTimeout(() => {
+                    window.location.href = "index.html";
+                }, 1000);
+            })
+            .catch(error => {
+                document.getElementById('loginPassword-error').textContent = error.message;
+                showNotification("Login failed: " + error.message, "error");
+            });
+        }
+        
+        function register() {
+            const isUsernameValid = validateField('registerUsername', 'Username is required.');
+            const isEmailValid = validateEmailField('registerEmail');
+            const isPasswordValid = validatePasswordField('registerPassword');
+            const doPasswordsMatch = validatePasswordsMatch('registerPassword', 'confirmPassword');
+            
+            if (!isUsernameValid || !isEmailValid || !isPasswordValid || !doPasswordsMatch) {
+                return;
+            }
+            
+            const username = document.getElementById('registerUsername').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            
+            // API call to register
+            fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username,
+                    email,
+                    password
+                }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 409) {
+                        throw new Error('Email already registered');
+                    }
+                    throw new Error('Registration failed');
+                }
+                return response.json();
+            })
+            .then(data => {
+                showNotification("Registration successful! You can now log in.", "success");
+                // Switch to login form after successful registration
+                setTimeout(() => {
+                    showLoginForm();
+                }, 1500);
+            })
+            .catch(error => {
+                if (error.message === 'Email already registered') {
+                    document.getElementById('registerEmail-error').textContent = error.message;
+                } else {
+                    showNotification("Registration failed: " + error.message, "error");
+                }
+            });
+        }
+        
+        function resetPassword() {
+            const isEmailValid = validateEmailField('resetEmail');
+            
+            if (!isEmailValid) {
+                return;
+            }
+            
+            const email = document.getElementById('resetEmail').value;
+            
+            // API call to request password reset
+            fetch('/api/auth/reset-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email
+                }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('Email not found');
+                    }
+                    throw new Error('Password reset request failed');
+                }
+                return response.json();
+            })
+            .then(data => {
+                showNotification("Password reset link sent to your email", "success");
+                
+                // For demo/development purposes only:
+                // In a real app, the user would click the link in their email
+                // Here we just show the new password form directly
+                setTimeout(() => {
+                    showNewPasswordForm();
+                }, 1500);
+            })
+            .catch(error => {
+                document.getElementById('resetEmail-error').textContent = error.message;
+                showNotification("Reset request failed: " + error.message, "error");
+            });
+        }
+        
+        function saveNewPassword() {
+            const isPasswordValid = validatePasswordField('newPassword');
+            const doPasswordsMatch = validatePasswordsMatch('newPassword', 'confirmNewPassword');
+            
+            if (!isPasswordValid || !doPasswordsMatch) {
+                return;
+            }
+            
+            const password = document.getElementById('newPassword').value;
+            
+            // In a real app, you would include the reset token from the URL
+            // Here we just simulate it
+            const resetToken = "dummy-reset-token";
+            
+            // API call to save new password
+            fetch('/api/auth/save-new-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    resetToken,
+                    password
+                }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to save new password');
+                }
+                return response.json();
+            })
+            .then(data => {
+                showNotification("Password reset successful! You can now log in with your new password.", "success");
+                setTimeout(() => {
+                    showLoginForm();
+                }, 1500);
+            })
+            .catch(error => {
+                showNotification("Failed to reset password: " + error.message, "error");
+            });
+        }
+        
+        // Notification System
+        function showNotification(message, type) {
+            const notificationElement = document.getElementById('notification');
+            notificationElement.textContent = message;
+            notificationElement.className = `notification ${type}`;
+            notificationElement.classList.add('show');
+            
+            setTimeout(() => {
+                notificationElement.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Check for password reset token in URL (for a real application)
+        function checkForResetToken() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const resetToken = urlParams.get('reset');
+            
+            if (resetToken) {
+                // Show the new password form
+                showNewPasswordForm();
+                
+                // Store the token for later use when saving the new password
+                // This would be used in saveNewPassword()
+                document.getElementById('newPasswordForm').dataset.resetToken = resetToken;
+            }
+        }
+        
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if there's a reset token in the URL
+            checkForResetToken();
+        });
+    </script>
+</body>
+</html>

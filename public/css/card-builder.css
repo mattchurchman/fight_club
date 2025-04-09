@@ -1,0 +1,166 @@
+* {
+    box-sizing: border-box;
+    font-family: 'Roboto', Arial, sans-serif;
+}
+body {
+    margin: 0;
+    padding: 20px;
+    background-color: #1a1a1a;
+    color: white;
+}
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.card-entry-panel {
+    background-color: #2a2a2a;
+    border-radius: 8px;
+    padding: 20px;
+}
+h1, h2, h3 {
+    color: #ffcc00;
+    margin-top: 0;
+}
+.form-section {
+    background-color: #333;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+.form-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+.form-group {
+    flex: 1;
+    min-width: 200px;
+}
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+input[type="text"],
+input[type="number"],
+input[type="url"] {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    border: none;
+    background-color: #444;
+    color: white;
+}
+input[type="checkbox"] {
+    margin-right: 5px;
+}
+button {
+    background-color: #444;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+button:hover {
+    background-color: #555;
+}
+button.primary {
+    background-color: #ffcc00;
+    color: #000;
+    font-weight: bold;
+    padding: 10px 20px;
+}
+button.primary:hover {
+    background-color: #e6b800;
+}
+button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+.error {
+    color: #ff6b6b;
+    font-size: 14px;
+    margin-top: 5px;
+}
+.fight-list {
+    margin: 20px 0;
+}
+.fight-item {
+    background-color: #333;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.fight-item-details {
+    flex: 1;
+}
+.fight-actions {
+    display: flex;
+    gap: 5px;
+}
+.json-output {
+    margin-top: 20px;
+}
+textarea {
+    width: 100%;
+    height: 200px;
+    background-color: #333;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 10px;
+    font-family: monospace;
+    resize: vertical;
+}
+.copy-btn {
+    margin-top: 10px;
+}
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+}
+.notification.success {
+    background-color: #4CAF50;
+}
+.notification.error {
+    background-color: #f44336;
+}
+.notification.show {
+    opacity: 1;
+}
+.actions-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+#saveCardBtn {
+    background-color: #4CAF50;
+}
+#loadCardList {
+    margin-top: 20px;
+}
+.saved-card-item {
+    background-color: #333;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

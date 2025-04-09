@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UFC Betting Panel</title>
+    <link rel="stylesheet" href="/css/betting-panel.css">
+</head>
+<body>
+    <div id="navbar-container"></div>
+    <script src="/js/navbar.js"></script>
+    <div class="container">
+        <div class="betting-panel">
+            <h1 id="event-title">UFC Betting Panel</h1>            
+            <div class="tokens-info">
+                <div>Total Tokens: <span id="total-tokens">1000</span></div>
+                <div>Remaining: <span id="remaining-tokens">1000</span></div>
+            </div>
+            
+            <div id="fight-card" class="fight-card">
+                <!-- Fights will be populated here -->
+                <div style="text-align: center; color: #888; padding: 20px;">
+                    Load a fight card to begin betting.
+                </div>
+            </div>
+            
+            <div class="confidence-selection">
+                <h3>Confidence Ranking</h3>
+                <p>Drag fights to rank from highest confidence (top) to lowest confidence (bottom)</p>
+                <div id="confidence-list">
+                    <!-- Confidence ranking will be here -->
+                </div>
+            </div>
+            
+            <div class="bleed-selection">
+                <h3>"First to Bleed" Selection</h3>
+                <select id="bleed-fight">
+                    <option value="">Select a fight</option>
+                    <!-- Options will be populated -->
+                </select>
+                <select id="bleed-fighter">
+                    <option value="">Select a fighter</option>
+                    <!-- Options will be populated -->
+                </select>
+            </div>
+            
+            <button id="submit-bets" class="primary" disabled>Submit Bets</button>
+            <div id="error-message" class="error"></div>
+            
+            
+            <div class="json-output">
+                <textarea id="bet-json" readonly></textarea>
+                <button id="copy-json" class="copy-btn">Copy JSON</button>
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let fights = [];
+        let victoryMethods = [];
+        let userBets = {};
+        let confidenceOrder = [];
+        let bleedPick = { fightId: null, fighterId: null };
+        let totalTokens = 1000;
+        let remainingTokens = 1000;
+        let eventTitle = "UFC Betting Panel";
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fetch the latest fight card
+            fetchLatestCard();
+
+            // Event listeners
+            //document.getElementById('load-data-btn').addEventListener('click', loadFightCardData);
+            document.getElementById('submit-bets').addEventListener('click', submitBets);
+            document.getElementById('bleed-fight').addEventListener('change', updateBleedFighters);
+            document.getElementById('copy-json').addEventListener('click', copyBettingJson);
+        });
+        
+        // Check authentication status
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/auth/status', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Authentication check failed');
+                }
+                
+                const data = await response.json();
+                return data.authenticated;
+            } catch (error) {
+                console.error('Error checking authentication status:', error);
+                return false;
+            }
+        }
+
+        // Check if event has started
+        async function checkEventStart(eventTitle) {
+            try {
+                const response = await fetch(`/api/event/start/${eventTitle}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to check event start');
+                }
+                
+                const data = await response.json();
+                console.log('js ',data)
+                return data.exists;
+            } catch (error) {
+                console.error('Error checking event start:', error);
+                return false;
+            }
+        }
+
+        
+        // Check if user has already submitted bets for this event
+        async function checkExistingBets(eventTitle) {
+            try {
+                const response = await fetch(`/api/bets/check/${eventTitle}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to check existing bets');
+                }
+                
+                const data = await response.json();
+                console.log('js ',data)
+                return data.exists;
+            } catch (error) {
+                console.error('Error checking existing bets:', error);
+                return false;
+            }
+        }
+
+        
+        // Fetch the latest fight card from the API
+        function fetchLatestCard() {
+            fetch('/api/cards/latest')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch latest card');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    jsonString = JSON.stringify(data);                    
+
+                    loadFightCardData();
+                })
+                .catch(error => {
+                    //console.error('Error:', error);
+                    //document.getElementById('card-title').textContent = 'Error loading card';
+                    //document.getElementById('card-info').innerHTML += `<p class="error">${error.message}</p>`;
+                });
+        }
+
+
+        // Load fight card data from JSON
+        function loadFightCardData() {
+            //const jsonInput = document.getElementById('json-input').value;
+            //const errorElement = document.getElementById('load-error');
+            //errorElement.textContent = '';
+            
+            try {
+                const data = JSON.parse(jsonString);
+                
+                // Validate required fields
+                if (!data.fights || !Array.isArray(data.fights) || data.fights.length === 0) {
+                    throw new Error('Invalid fight data format. Please make sure the JSON contains a fights array.');
+                }
+                
+                // Set global variables
+                fights = data.fights;
+                eventTitle = data.title || "UFC Betting Panel";
+                
+                // Update title
+                document.getElementById('event-title').textContent = eventTitle;
+                
+                // Reset user bets and confidence order
+                userBets = {};
+                confidenceOrder = [];
+                bleedPick = { fightId: null, fighterId: null };
+                remainingTokens = totalTokens;
+                
+                // Initialize components
+                renderFightCard();
+                initializeConfidenceList();
+                initializeBleedSelection();
+                
+                // Enable submit button
+                document.getElementById('submit-bets').disabled = false;
+                
+            } catch (error) {
+                errorElement.textContent = `Error loading data: ${error.message}`;
+            }
+        }
+        
+        // Render the fight card with betting options
+        function renderFightCard() {
+            const fightCard = document.getElementById('fight-card');
+            fightCard.innerHTML = '';
+            
+            fights.forEach(fight => {
+                const fightEl = document.createElement('div');
+                fightEl.className = 'fight';
+                fightEl.dataset.fightId = fight.id;
+                
+                // Calculate odds display
+                const odds1Display = fight.fighter1.odds > 0 ? `+${fight.fighter1.odds}` : fight.fighter1.odds;
+                const odds2Display = fight.fighter2.odds > 0 ? `+${fight.fighter2.odds}` : fight.fighter2.odds;
+                const odds1Class = fight.fighter1.odds > 0 ? 'positive' : '';
+                const odds2Class = fight.fighter2.odds > 0 ? 'positive' : '';
+
+                fightEl.innerHTML = `
+                    <h3>${fight.weight} ${fight.isMain ? '- Main Event' : ''}</h3>
+                    <div class="fighters">
+                        <div class="fighter" data-fighter-id="${fight.id}_1">
+                            <div class="fighter-img"><img src="/images/${fight.fighter1.name}.png" alt="${fight.fighter1.name}"></div>
+                            <div class="fighter-name">${fight.fighter1.name}</div>
+                            <div class="fighter-record">${fight.fighter1.record}</div>
+                            <div class="odds ${odds1Class}">${odds1Display}</div>
+                        </div>
+                        <div style="align-self: center; font-size: 20px;">VS</div>
+                        <div class="fighter" data-fighter-id="${fight.id}_2">
+                            <div class="fighter-img"><img src="/images/${fight.fighter2.name}.png" alt="${fight.fighter2.name}"></div>
+                            <div class="fighter-name">${fight.fighter2.name}</div>
+                            <div class="fighter-record">${fight.fighter2.record}</div>
+                            <div class="odds ${odds2Class}">${odds2Display}</div>
+                        </div>
+                    </div>
+                    <div class="betting-controls">
+                        <div>
+                            <strong>Pick Winner:</strong>
+                            <select class="fighter-select" data-fight-id="${fight.id}">
+                                <option value="">Select fighter</option>
+                                <option value="1">${fight.fighter1.name}</option>
+                                <option value="2">${fight.fighter2.name}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <strong>Tokens:</strong> <span class="token-value" id="tokens-fight-${fight.id}">0</span>
+                            <input type="range" min="0" max="400" value="0" step="1" 
+                                  class="token-slider" data-fight-id="${fight.id}">
+                        </div>
+                        <div class="method-selection">
+                            <strong>Method of Victory:</strong>
+                            <select class="method-select" data-fight-id="${fight.id}">
+                                <option value="">Select method</option>
+                                <option value="ko">KO/TKO (${fight.victoryMethods.ko})</option>
+                                <option value="sub">Submission (${fight.victoryMethods.sub})</option>
+                                <option value="dec">Decision (${fight.victoryMethods.dec})</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+                
+                fightCard.appendChild(fightEl);
+                
+                // Initialize user bet for this fight
+                userBets[fight.id] = {
+                    tokens: 0,
+                    fighter: null,
+                    method: null
+                };
+            });
+            
+            // Add event listeners to token sliders
+            document.querySelectorAll('.token-slider').forEach(slider => {
+                slider.addEventListener('input', function() {
+                    const fightId = this.dataset.fightId;
+                    const tokensDiff = parseInt(this.value) - userBets[fightId].tokens;
+                    
+                    // Check if we have enough tokens remaining
+                    if (remainingTokens - tokensDiff < 0) {
+                        this.value = userBets[fightId].tokens + remainingTokens;
+                    }
+                    
+                    // Update the bet and remaining tokens
+                    const newTokens = parseInt(this.value);
+                    updateTokens(fightId, newTokens);
+                });
+            });
+            
+            // Add event listeners to fighter selects
+            document.querySelectorAll('.fighter-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const fightId = this.dataset.fightId;
+                    userBets[fightId].fighter = this.value ? parseInt(this.value) : null;
+                });
+            });
+            
+            // Add event listeners to method selects
+            document.querySelectorAll('.method-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const fightId = this.dataset.fightId;
+                    userBets[fightId].method = this.value;
+                });
+            });
+        }
+        
+        // Update token display and remaining tokens
+        function updateTokens(fightId, newTokens) {
+            const oldTokens = userBets[fightId].tokens;
+            userBets[fightId].tokens = newTokens;
+            remainingTokens -= (newTokens - oldTokens);
+            
+            // Update displays
+            document.getElementById(`tokens-fight-${fightId}`).textContent = newTokens;
+            document.getElementById('remaining-tokens').textContent = remainingTokens;
+        }
+        
+        // Initialize the confidence ranking list
+        function initializeConfidenceList() {
+            const confidenceList = document.getElementById('confidence-list');
+            confidenceList.innerHTML = '';
+            
+            if (fights.length === 0) {
+                confidenceList.innerHTML = '<div style="text-align: center; color: #888; padding: 10px;">Load a fight card to rank your confidence.</div>';
+                return;
+            }
+            
+            // Simple drag-and-drop for demonstration
+            fights.forEach(fight => {
+                const item = document.createElement('div');
+                item.className = 'fight';
+                item.style.cursor = 'move';
+                item.dataset.fightId = fight.id;
+                item.innerHTML = `
+                    <strong>${fight.fighter1.name} vs ${fight.fighter2.name}</strong>
+                    <span>Confidence Rank: <span class="rank">Not Ranked</span></span>
+                `;
+                
+                // Simple drag and drop functionality (basic implementation)
+                item.draggable = true;
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragend', updateConfidenceRanks);
+                
+                confidenceList.appendChild(item);
+            });
+            
+            // Initialize confidence order
+            confidenceOrder = Array.from(fights, fight => fight.id);
+            updateConfidenceRanks();
+        }
+        
+        // Initialize bleed selection dropdown
+        function initializeBleedSelection() {
+            const bleedFight = document.getElementById('bleed-fight');
+            bleedFight.innerHTML = '<option value="">Select a fight</option>';
+            
+            if (fights.length === 0) {
+                return;
+            }
+            
+            fights.forEach(fight => {
+                const option = document.createElement('option');
+                option.value = fight.id;
+                option.textContent = `${fight.fighter1.name} vs ${fight.fighter2.name}`;
+                bleedFight.appendChild(option);
+            });
+        }
+        
+        // Update bleed fighter options based on selected fight
+        function updateBleedFighters() {
+            const fightId = document.getElementById('bleed-fight').value;
+            const bleedFighter = document.getElementById('bleed-fighter');
+            
+            bleedFighter.innerHTML = '<option value="">Select a fighter</option>';
+            
+            if (fightId) {
+                const fight = fights.find(f => f.id == fightId);
+                
+                const option1 = document.createElement('option');
+                option1.value = `${fight.id}_1`;
+                option1.textContent = fight.fighter1.name;
+                bleedFighter.appendChild(option1);
+                
+                const option2 = document.createElement('option');
+                option2.value = `${fight.id}_2`;
+                option2.textContent = fight.fighter2.name;
+                bleedFighter.appendChild(option2);
+            }
+            
+            bleedFighter.addEventListener('change', function() {
+                const value = this.value;
+                if (value) {
+                    const [fightId, fighterId] = value.split('_');
+                    bleedPick.fightId = parseInt(fightId);
+                    bleedPick.fighterId = parseInt(fighterId);
+                } else {
+                    bleedPick = { fightId: null, fighterId: null };
+                }
+            });
+        }
+        
+        // Drag and drop helpers for confidence ranking
+        function handleDragStart(e) {
+            this.style.opacity = '0.4';
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', this.dataset.fightId);
+        }
+        
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            
+            const draggedId = e.dataTransfer.getData('text/plain');
+            const targetId = this.dataset.fightId;
+            
+            if (draggedId !== targetId) {
+                // Reorder the confidence list (simple implementation)
+                const draggedIndex = confidenceOrder.indexOf(parseInt(draggedId));
+                const targetIndex = confidenceOrder.indexOf(parseInt(targetId));
+                
+                // Remove from old position and insert at new position
+                confidenceOrder.splice(draggedIndex, 1);
+                confidenceOrder.splice(targetIndex, 0, parseInt(draggedId));
+                
+                // Reorder DOM elements
+                const confidenceList = document.getElementById('confidence-list');
+                const items = Array.from(confidenceList.children);
+                
+                // Sort the items based on new confidenceOrder
+                items.sort((a, b) => {
+                    return confidenceOrder.indexOf(parseInt(a.dataset.fightId)) - 
+                           confidenceOrder.indexOf(parseInt(b.dataset.fightId));
+                });
+                
+                // Clear and append in new order
+                confidenceList.innerHTML = '';
+                items.forEach(item => confidenceList.appendChild(item));
+            }
+            
+            return false;
+        }
+        
+        function updateConfidenceRanks() {
+            // Update rank displays
+            const items = document.querySelectorAll('#confidence-list .fight');
+            items.forEach((item, index) => {
+                const rankSpan = item.querySelector('.rank');
+                if (rankSpan) {
+                    rankSpan.textContent = `#${index + 1}`;
+                    
+                    // Add visual indicator
+                    if (index === 0) {
+                        rankSpan.style.color = '#6bff6b';
+                        rankSpan.style.fontWeight = 'bold';
+                    } else if (index === 1) {
+                        rankSpan.style.color = '#a9ff6b';
+                        rankSpan.style.fontWeight = 'bold';
+                    } else {
+                        rankSpan.style.color = '';
+                        rankSpan.style.fontWeight = '';
+                    }
+                }
+            });
+        }
+        
+        // Submit bets and validate
+        async function submitBets() {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = '';
+            
+            // Check if the user is authenticated
+            const isAuthenticated = await checkAuthStatus();
+            if (!isAuthenticated) {
+                errorElement.textContent = `You must be logged in to submit bets.`;
+                return;
+            }
+
+            // Check if all tokens are allocated
+            if (remainingTokens > 0) {
+                errorElement.textContent = `You still have ${remainingTokens} tokens unallocated. Please use all tokens.`;
+                return;
+            }
+            
+            // Check min 50 per fight
+            for (const fightId in userBets) {
+                if (userBets[fightId].tokens < 50) {
+                    errorElement.textContent = `Minimum bet is 50 tokens per fight. Please adjust your bets.`;
+                    return;
+                }
+                
+                if (!userBets[fightId].fighter) {
+                    errorElement.textContent = `Please select a fighter for all fights.`;
+                    return;
+                }
+                
+                if (!userBets[fightId].method) {
+                    errorElement.textContent = `Please select a method of victory for all fights.`;
+                    return;
+                }
+            }
+            
+            // Check if bleed pick is complete
+            if (bleedPick.fightId === null || bleedPick.fighterId === null) {
+                errorElement.textContent = `Please select a fight and fighter for "First to Bleed" prop.`;
+                return;
+            }
+            
+            // Check if user has already submitted bets for this event
+            const hasExistingBets = await checkExistingBets(eventTitle);
+            console.log(eventTitle)
+            console.log(hasExistingBets)
+
+            // Check if event has started
+            const eventStarted = await checkEventStart(eventTitle);
+            console.log(eventStarted)
+
+            // Generate JSON data for the results simulator
+            userBetData = generateBettingJson();
+            
+            console.log('existing bets: ', hasExistingBets)
+            console.log('event started: ', eventStarted)
+
+            // Allow updates if the card hasn't started
+            if(!eventStarted) {
+                // Send insert query if none exist, alert if they do
+                if (!hasExistingBets) {
+                    // Api end point call
+                    fetch('/api/bets/submit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: userBetData,
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to save bet');
+                        }
+                        return response.json();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showNotification("Error saving card: " + error.message, "error");
+                    });
+                    alert('Bets submitted successfully! Peep live results during the fight card.');
+                }   
+                else {
+                    // Api end point call
+                    fetch('/api/bets/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: userBetData,
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to save bet');
+                        }
+                        return response.json();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showNotification("Error saving card: " + error.message, "error");
+                    });
+                    alert('Bet updated!');
+                }
+            }
+            else {
+                // Alert
+                alert('Event has already started! Results not updated');
+                window.location.href = "/index";
+            }
+                      
+        }
+        
+        // Generate betting JSON data
+        function generateBettingJson() {
+            const bettingData = {
+                eventTitle: eventTitle,
+                fights: fights,
+                userBets: userBets,
+                confidenceOrder: confidenceOrder,
+                bleedPick: bleedPick,
+                totalTokens: totalTokens
+            };
+            
+            console.log('betting data: ', bettingData)
+
+            const jsonString = JSON.stringify(bettingData, null, 2);
+            document.getElementById('bet-json').value = jsonString;
+            return jsonString;
+        }
+        
+        // Copy JSON to clipboard
+        function copyBettingJson() {
+            const jsonTextarea = document.getElementById('bet-json');
+            jsonTextarea.select();
+            document.execCommand('copy');
+            
+            // Visual feedback
+            const originalText = document.getElementById('copy-json').textContent;
+            document.getElementById('copy-json').textContent = 'Copied!';
+            setTimeout(() => {
+                document.getElementById('copy-json').textContent = originalText;
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

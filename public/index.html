@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UFC Betting Rules</title>
+    <link rel="stylesheet" href="/css/index.css">
+    <style>
+        /* Modern styles overrides */
+        body {
+            background-color: #121212;
+            font-family: 'Roboto', Arial, sans-serif;
+            color: #f1f1f1;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .hero-section {
+            margin-bottom: 30px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+        
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .schedule-section {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .schedule-section h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #ffcc00;
+            border-left: 4px solid #ffcc00;
+            padding-left: 10px;
+        }
+        
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        
+        .schedule-table th {
+            background-color: #2a2a2a;
+            color: #ffcc00;
+            text-align: left;
+            padding: 12px 15px;
+            font-weight: 600;
+            border-bottom: 2px solid #3a3a3a;
+        }
+        
+        .schedule-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #3a3a3a;
+        }
+        
+        .schedule-table tr:hover {
+            background-color: #252525;
+        }
+        
+        .rules-panel {
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .rules-panel h1 {
+            font-size: 32px;
+            margin-bottom: 25px;
+            color: #ffcc00;
+            text-align: center;
+        }
+        
+        .rule-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .rule-section:last-child {
+            border-bottom: none;
+            margin-bottom: 10px;
+        }
+        
+        .rule-section h2 {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: #ffcc00;
+            border-left: 4px solid #ffcc00;
+            padding-left: 10px;
+        }
+        
+        .rule-section h3 {
+            font-size: 18px;
+            color: #e6e6e6;
+            margin: 15px 0 10px;
+        }
+        
+        .rule-section ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .rule-section li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .rule-section li:before {
+            content: "•";
+            color: #ffcc00;
+            position: absolute;
+            left: 0;
+            font-size: 20px;
+            line-height: 20px;
+        }
+        
+        .example {
+            background-color: #2a2a2a;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 3px solid #ffcc00;
+            font-style: italic;
+        }
+        
+        .enter-tournament {
+            display: block;
+            background-color: #ffcc00;
+            color: #000;
+            text-align: center;
+            padding: 15px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .enter-tournament:hover {
+            background-color: #ffd633;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255, 204, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+    <script src="/js/navbar.js"></script>
+    
+    <div class="container">
+        <!-- Hero Video Section -->
+        <div class="hero-section">
+            <div class="video-container">
+                <iframe 
+                    src="https://www.youtube.com/embed/-abc123?autoplay=1" 
+                    title="UFC Betting Guide" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+        
+        <!-- Live Feed Schedule Section -->
+        <div class="schedule-section">
+            <h2>Live Feed Schedule</h2>
+            <table class="schedule-table" id="schedule-table">
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody id="schedule-body">
+                    <tr>
+                        <td colspan="3">Loading schedule data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Rules Section -->
+        <div class="rules-panel">
+            <h1>UFC Tournament Rules</h1>
+            
+            <div class="rule-section">
+                <h2>Core Betting Structure</h2>
+                <ul>
+                    <li>Users have 1000 tokens to distribute across fights</li>
+                    <li>Minimum bet: 50 tokens per fight</li>
+                    <li>Maximum bet: 400 tokens per fight</li>
+                    <li>Tokens are assigned using a scroll bar interface</li>
+                </ul>
+            </div>
+            
+            <div class="rule-section">
+                <h2>Bet Components</h2>
+                <h3>Main Bet: Winner/loser of the fight</h3>
+                <p>Payout: Tokens × Vegas odds multiplier</p>
+                <div class="example">
+                    Example: 100 tokens on a +150 underdog would return 150 tokens profit if correct
+                </div>
+            </div>
+            
+            <div class="rule-section">
+                <h2>Method of Victory Multiplier</h2>
+                <p>50% of tokens × odds specific to that method</p>
+                <div class="example">
+                    Example: 100 tokens on a fighter with a submission method of victory at +300 odds would give an additional 150 tokens (50% of 100 tokens × 3.0 odds)
+                </div>
+            </div>
+            
+            <div class="rule-section">
+                <h2>Confidence Ordering</h2>
+                <ul>
+                    <li>Correctly ranked #1 confidence fight: +50% bonus on winnings</li>
+                    <li>Correctly ranked #2 confidence fight: +40% bonus on winnings</li>
+                    <li>And so on down to +10% for #5</li>
+                </ul>
+            </div>
+            
+            <div class="rule-section">
+                <h2>Loss Penalties</h2>
+                <ul>
+                    <li>Wrong on #1 confidence pick: Lose 20% of that bet amount from grand total</li>
+                    <li>Wrong on #2 confidence pick: Lose 10% of that bet amount from grand total</li>
+                    <li>Users must allocate all 1000 tokens across fights to submit their picks</li>
+                </ul>
+            </div>
+            
+            <div class="rule-section">
+                <h2>First to Bleed</h2>
+                <ul>
+                    <li>Users select one fight for this prop bet</li>
+                    <li>If correct AND fight outcome correct: Additional 25% multiplier on that fight's winnings</li>
+                </ul>
+            </div>
+            
+            <a href="betting-panel.html" class="enter-tournament">Enter Tournament</a>
+        </div>
+    </div>
+    
+    <script>
+        // Function to fetch schedule data from API
+        async function fetchSchedule() {
+            try {
+                // Replace with your actual API endpoint
+                const response = await fetch('/api/schedule');
+                const data = await response.json();
+                
+                const scheduleBody = document.getElementById('schedule-body');
+                
+                if (data && data.length > 0) {
+                    scheduleBody.innerHTML = '';
+                    
+                    data.forEach(event => {
+                        const row = document.createElement('tr');
+                        
+                        const eventCell = document.createElement('td');
+                        eventCell.textContent = event.event;
+                        
+                        const dateCell = document.createElement('td');
+                        const eventDate = event.date;
+                        dateCell.textContent = eventDate;
+                        
+                        const timeCell = document.createElement('td');
+                        timeCell.textContent = event.time;
+                        
+                        row.appendChild(eventCell);
+                        row.appendChild(dateCell);
+                        row.appendChild(timeCell);
+                        
+                        scheduleBody.appendChild(row);
+                    });
+                } else {
+                    scheduleBody.innerHTML = '<tr><td colspan="3">No upcoming events found</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error fetching schedule:', error);
+                document.getElementById('schedule-body').innerHTML = 
+                    '<tr><td colspan="3">Failed to load schedule data. Please try again later.</td></tr>';
+            }
+        }
+        
+        // Mock data in case API fails
+        function loadMockData() {
+            const mockData = [
+                { name: "UFC 305: Du Plessis vs. Adesanya", date: "2025-04-12", time: "10:00 PM ET" },
+                { name: "UFC Fight Night: Holloway vs. Kattar II", date: "2025-04-20", time: "8:00 PM ET" },
+                { name: "UFC 306: Jones vs. Aspinall", date: "2025-05-03", time: "10:00 PM ET" },
+                { name: "UFC Fight Night: Shevchenko vs. Grasso III", date: "2025-05-17", time: "7:00 PM ET" }
+            ];
+            
+            const scheduleBody = document.getElementById('schedule-body');
+            scheduleBody.innerHTML = '';
+            
+            mockData.forEach(event => {
+                const row = document.createElement('tr');
+                
+                const eventCell = document.createElement('td');
+                eventCell.textContent = event.name;
+                
+                const dateCell = document.createElement('td');
+                const eventDate = new Date(event.date);
+                dateCell.textContent = eventDate.toLocaleDateString();
+                
+                const timeCell = document.createElement('td');
+                timeCell.textContent = event.time;
+                
+                row.appendChild(eventCell);
+                row.appendChild(dateCell);
+                row.appendChild(timeCell);
+                
+                scheduleBody.appendChild(row);
+            });
+        }
+        
+        // Try to fetch data, load mock data if fetch fails
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchSchedule().catch(() => {
+                loadMockData();
+            });
+        });
+    </script>
+</body>
+</html>

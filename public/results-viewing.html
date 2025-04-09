@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UFC Results Viewer</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div id="navbar-container"></div>
+    <script src="/js/navbar.js"></script>
+    <div class="container">
+        <div class="results-panel">
+            <h1>UFC Results Viewer</h1>
+            
+            <!-- Event and User Selection -->
+            <div class="selector-container">
+                <label for="event-select">Select Event:</label>
+                <select id="event-select">
+                    <option value="latest">Latest Event</option>
+                    <!-- Other events will be populated here -->
+                </select>
+                
+                <label for="user-select">Select User:</label>
+                <select id="user-select">
+                    <option value="current">Current User</option>
+                    <!-- Other users will be populated here -->
+                </select>
+            </div>
+            
+            <div id="card-info">
+                <h2 id="card-title">Loading card information...</h2>
+                <p id="card-date"></p>
+            </div>
+            
+            <h3>Event Results</h3>
+            <table id="event-results-table">
+                <thead>
+                    <tr>
+                        <th>Fight</th>
+                        <th>Winner</th>
+                        <th>Method</th>
+                        <th>First Blood</th>
+                    </tr>
+                </thead>
+                <tbody id="event-results-body">
+                    <!-- Event results will appear here -->
+                </tbody>
+            </table>
+            
+            <h3>Betting Results</h3>
+            <div id="user-status">
+                <p id="login-message">Loading user information...</p>
+            </div>
+            <table id="results-table">
+                <thead>
+                    <tr>
+                        <th>Fight</th>
+                        <th>User's Bet</th>
+                        <th>Outcome</th>
+                        <th>Tokens</th>
+                    </tr>
+                </thead>
+                <tbody id="results-body">
+                    <!-- Results will appear here -->
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3"><strong>Final Total:</strong></td>
+                        <td id="final-tokens"><strong>0</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+            
+            <!-- Leaderboard Section -->
+            <div class="leaderboard">
+                <h3>Event Leaderboard</h3>
+                <table id="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>User</th>
+                            <th>Tokens</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <!-- Leaderboard data will appear here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Victory methods with names
+        const victoryMethods = [
+            { id: 'ko', name: 'KO/TKO'},
+            { id: 'sub', name: 'Submission'},
+            { id: 'dec', name: 'Decision'}
+        ];
+
+        // State variables
+        let cardId = null;
+        let cardTitle = null;
+        let fights = [];
+        let cardResults = {};
+        let currentUser = null;
+        let availableEvents = [];
+        let availableUsers = [];
+        let selectedEvent = 'latest';
+        let selectedUser = 'current';
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up event listeners for dropdowns
+            document.getElementById('event-select').addEventListener('change', handleEventChange);
+            document.getElementById('user-select').addEventListener('change', handleUserChange);
+            
+            // Check if user is logged in
+            checkUserStatus();
+            
+            // Fetch available events
+            fetchAvailableEvents();
+            
+            // Fetch the latest fight card initially
+            fetchLatestCard();
+        });
+        
+        // Handle event selection change
+        function handleEventChange() {
+            const select = document.getElementById('event-select');
+            selectedEvent = select.value;
+            
+            // Reset user selection to 'current' when event changes
+            document.getElementById('user-select').value = 'current';
+            selectedUser = 'current';
+            
+            // Load the selected event
+            if (selectedEvent === 'latest') {
+                fetchLatestCard();
+            } else {
+                fetchEventById(selectedEvent);
+            }
+            
+            // Fetch users who placed bets for this event
+            fetchUsersWithBets(selectedEvent);
+        }
+        
+        // Handle user selection change
+        function handleUserChange() {
+            const select = document.getElementById('user-select');
+            selectedUser = select.value;
+            
+            // Update the user's betting results
+            if (selectedUser === 'current') {
+                // If 'current' is selected, use the logged-in user
+                if (currentUser) {
+                    fetchUserBetsAndResults(cardTitle, currentUser);
+                } else {
+                    document.getElementById('results-body').innerHTML = `<tr><td colspan="4">Please log in to view your betting results</td></tr>`;
+                }
+            } else {
+                // Otherwise use the selected user
+                fetchUserBetsAndResults(cardTitle, selectedUser);
+            }
+        }
+        
+        // Check if the user is logged in
+        function checkUserStatus() {
+            fetch('/api/auth/status')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch user status');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.username) {
+                        currentUser = data.username;
+                        document.getElementById('user-status').innerHTML = `<p>Viewing bets for: <strong id="viewing-user">${currentUser}</strong></p>`;
+                        document.getElementById('results-table').style.display = 'table';
+                    } else {
+                        document.getElementById('user-status').innerHTML = `<p class="warning">Not logged in. Select a user to view their betting results.</p>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('user-status').innerHTML = `<p class="error">Error checking login status: ${error.message}</p>`;
+                });
+        }
+        
+        // Fetch available events
+        function fetchAvailableEvents() {
+            fetch('/api/cardsAll/all')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch events');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    availableEvents = data;
+                    console.log('data: ', data)
+                    
+                    // Populate event select dropdown
+                    const eventSelect = document.getElementById('event-select');
+                    
+                    // Keep the "Latest Event" option and add the rest
+                    while (eventSelect.options.length > 1) {
+                        eventSelect.remove(1);
+                    }
+                    
+                    data.forEach(event => {
+                        const option = document.createElement('option');
+                        option.value = event.id;
+                        option.textContent = event.title;
+                        eventSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to load available events');
+                });
+        }
+        
+        // Fetch users who placed bets for a specific event
+        function fetchUsersWithBets(eventId) {
+            let eventTitle;
+            
+            if (eventId === 'latest') {
+                eventTitle = cardTitle;
+            } else {
+                const event = availableEvents.find(e => e.id === eventId);
+                eventTitle = event ? event.title : null;
+            }
+            
+            if (!eventTitle) {
+                console.error('Event title not found');
+                return;
+            }
+            
+            fetch(`/api/event-users/${encodeURIComponent(eventTitle)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch users');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    availableUsers = data;
+                    
+                    // Populate user select dropdown
+                    const userSelect = document.getElementById('user-select');
+                    
+                    // Keep the "Current User" option and add the rest
+                    while (userSelect.options.length > 1) {
+                        userSelect.remove(1);
+                    }
+                    
+                    data.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.username;
+                        option.textContent = user.username;
+                        userSelect.appendChild(option);
+                    });
+                    
+                    // Fetch the leaderboard for this event
+                    fetchLeaderboard(eventTitle);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to load users with bets');
+                });
+        }
+        
+        // Fetch the latest fight card and its details
+        function fetchLatestCard() {
+            fetch('/api/cards/latest')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch latest card');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    cardId = data.id;
+                    cardTitle = data.title;
+                    fights = data.fights;
+                    
+                    // Update card info
+                    document.getElementById('card-title').textContent = data.title;
+                    document.getElementById('card-date').textContent = new Date(data.date).toLocaleDateString();
+                    
+                    // Fetch the event results
+                    return fetchEventResults(data.title);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('card-title').textContent = 'Error loading card';
+                    document.getElementById('card-info').innerHTML += `<p class="error">${error.message}</p>`;
+                });
+        }
+        
+        // Fetch event by ID
+        function fetchEventById(eventId) {
+            fetch(`/api/cardsId/${eventId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch event');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    cardId = data.id;
+                    cardTitle = data.title;
+                    fights = data.fights;
+                    
+                    // Update card info
+                    document.getElementById('card-title').textContent = data.title;
+                    document.getElementById('card-date').textContent = new Date(data.date).toLocaleDateString();
+                    
+                    // Fetch the event results
+                    return fetchEventResults(data.title);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('card-title').textContent = 'Error loading card';
+                    document.getElementById('card-info').innerHTML += `<p class="error">${error.message}</p>`;
+                });
+        }
+        
+        // Fetch event results from fight_cards table
+        function fetchEventResults(eventTitle) {
+            fetch(`/api/event-results/${encodeURIComponent(eventTitle)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch event results');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Display event results in the event results table
+                    displayEventResults(data);
+                    
+                    // Store card results
+                    cardResults = data.results || {};
+                    
+                    // If a specific user is selected or current user is logged in
+                    if (selectedUser !== 'current') {
+                        fetchUserBetsAndResults(eventTitle, selectedUser);
+                    } else if (currentUser) {
+                        fetchUserBetsAndResults(eventTitle, currentUser);
+                    } else {
+                        document.getElementById('results-body').innerHTML = `<tr><td colspan="4">Please select a user or log in</td></tr>`;
+                    }
+                    
+                    // Fetch users who placed bets for this event
+                    fetchUsersWithBets(cardId);
+                    
+                    // Fetch the leaderboard for this event
+                    fetchLeaderboard(eventTitle);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('event-results-body').innerHTML = `<tr><td colspan="4" class="error">Error loading event results: ${error.message}</td></tr>`;
+                });
+        }
+        
+        // Display event results in the event results table
+        function displayEventResults(eventData) {
+            const resultsBody = document.getElementById('event-results-body');
+            resultsBody.innerHTML = '';
+            
+            if (!eventData || !eventData.fights || !eventData.results) {
+                resultsBody.innerHTML = `<tr><td colspan="4">No results available for this event yet.</td></tr>`;
+                return;
+            }
+            
+            const fights = eventData.fights;
+            const results = eventData.results;
+            
+            // For each fight...
+            fights.forEach(fight => {
+                const fightId = fight.id;
+                const result = results[fightId];
+                
+                // Skip if no result available for this fight
+                if (!result) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${fight.fighter1.name} vs ${fight.fighter2.name}</strong></td>
+                        <td colspan="3">No result available yet</td>
+                    `;
+                    resultsBody.appendChild(row);
+                    return;
+                }
+                
+                // Get winner name and method
+                const winnerName = result.winner === 1 ? fight.fighter1.name : fight.fighter2.name;
+                const method = victoryMethods.find(m => m.id === result.method).name;
+                
+                // Get first blood name (if available)
+                let firstBloodName = "N/A";
+                if (result.firstBleed) {
+                    firstBloodName = result.firstBleed === 1 ? fight.fighter1.name : fight.fighter2.name;
+                }
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${fight.fighter1.name} vs ${fight.fighter2.name}</strong></td>
+                    <td>${winnerName}</td>
+                    <td>${method}</td>
+                    <td>${firstBloodName}</td>
+                `;
+                resultsBody.appendChild(row);
+            });
+        }
+        
+        // Fetch user bets and results for the specified event
+        function fetchUserBetsAndResults(eventTitle, username) {
+            // Update the user status display
+            document.getElementById('user-status').innerHTML = `<p>Viewing bets for: <strong id="viewing-user">${username}</strong></p>`;
+            
+            fetch(`/api/user-bets/${encodeURIComponent(username)}/${encodeURIComponent(eventTitle)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch user bets and results');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data || !data.bets) {
+                        document.getElementById('results-body').innerHTML = `<tr><td colspan="4">No betting data found for this user and event.</td></tr>`;
+                        document.getElementById('final-tokens').textContent = "0";
+                        return;
+                    }
+                    
+                    // If we have results data, display it
+                    if (data.results) {
+                        displayUserResults(data.bets, data.results, fights);
+                    } else {
+                        document.getElementById('results-body').innerHTML = `<tr><td colspan="4">Waiting for event results...</td></tr>`;
+                        document.getElementById('final-tokens').textContent = "0";
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('results-body').innerHTML = `<tr><td colspan="4" class="error">Error loading user bets: ${error.message}</td></tr>`;
+                });
+        }
+        
+        // Display user results from the stored results data
+        function displayUserResults(bettingData, resultsData, fights) {
+            const resultsBody = document.getElementById('results-body');
+            resultsBody.innerHTML = '';
+            
+            if (!resultsData || !resultsData.resultsDetails) {
+                resultsBody.innerHTML = `<tr><td colspan="4">No results available yet</td></tr>`;
+                document.getElementById('final-tokens').textContent = "0";
+                return;
+            }
+            
+            const userBets = bettingData.userBets;
+            const confidenceOrder = bettingData.confidenceOrder;
+            const resultsDetails = resultsData.resultsDetails;
+            const totalWinnings = resultsData.totalWinnings;
+            const bleedPick = bettingData.bleedPick;
+            
+            // For each fight in confidence order...
+            confidenceOrder.forEach((fightId, confidenceRank) => {
+                const fight = fights.find(f => f.id === fightId);
+                const bet = userBets[fightId];
+                const result = resultsDetails[fightId];
+                let bleedNow = '';
+                let bleeder = '';
+
+                //toggle bleednow
+                if(bleedPick['fightId']==fightId){
+                    bleedNow = 'First Blood: ';
+                    bleeder = bleedPick['fighterId'] === 1 ? fight.fighter1.name : fight.fighter2.name; 
+                }
+                
+                // Skip if no result available for this fight
+                if (!result) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <strong>${fight.fighter1.name} vs ${fight.fighter2.name}</strong><br>
+                            <small>Confidence Rank: #${confidenceRank + 1}</small>
+                        </td>
+                        <td colspan="3">No result available yet</td>
+                    `;
+                    resultsBody.appendChild(row);
+                    return;
+                }
+                
+                // Create result row
+                const row = document.createElement('tr');
+                
+                // Get fighter names
+                const betFighter = bet.fighter === 1 ? fight.fighter1.name : fight.fighter2.name;
+                const resultFighter = result.winner === 1 ? fight.fighter1.name : fight.fighter2.name;
+                const method = victoryMethods.find(m => m.id === result.method).name;
+                const firstBlood = result.firstBleed === 1 ? fight.fighter1.name : fight.fighter2.name;
+                
+                row.innerHTML = `
+                    <td>
+                        <strong>${fight.fighter1.name} vs ${fight.fighter2.name}</strong><br>
+                        <small>Confidence Rank: #${confidenceRank + 1}</small>
+                    </td>
+                    <td>
+                        <span class="${result.betWon ? 'winner' : 'loser'}">${betFighter}</span><br>
+                        <small>${bet.tokens} tokens</small><br>
+                        <small class="${result.methodCorrect ? 'winner' : 'loser'}">Method: ${victoryMethods.find(m => m.id === bet.method).name}</small><br>
+                        <small class="${result.bleedCorrect ? 'winner' : 'loser'}">${bleedNow} ${bleeder}</small>
+                        <small class="bonus">Win: ${result.winBonus}, Method: ${result.methodBonus}, Conf: ${result.confBonus}, Blood: ${result.bleedBonus}</small>
+                    </td>
+                    <td>
+                        <strong>${resultFighter} by ${method}</strong><br>
+                        <small>First Blood: ${firstBlood}</small>
+                    </td>
+                    <td>
+                        ${result.payout > 0 ? '+' : ''}${result.payout.toFixed(0)}
+                    </td>
+                `;
+                
+                resultsBody.appendChild(row);
+            });
+            
+            // Update final total
+            document.getElementById('final-tokens').textContent = totalWinnings.toFixed(0);
+        }
+        
+        // Fetch leaderboard for the given event
+        function fetchLeaderboard(eventTitle) {
+            fetch(`/api/leaderboard/${encodeURIComponent(eventTitle)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch leaderboard');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    displayLeaderboard(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('leaderboard-body').innerHTML = `<tr><td colspan="3" class="error">Error loading leaderboard: ${error.message}</td></tr>`;
+                });
+        }
+        
+        // Display leaderboard data
+        function displayLeaderboard(leaderboardData) {
+            const leaderboardBody = document.getElementById('leaderboard-body');
+            leaderboardBody.innerHTML = '';
+            
+            if (!leaderboardData || leaderboardData.length === 0) {
+                leaderboardBody.innerHTML = `<tr><td colspan="3">No leaderboard data available for this event.</td></tr>`;
+                return;
+            }
+            
+            // Sort users by tokens (highest first)
+            leaderboardData.sort((a, b) => b.tokens - a.tokens);
+            
+            // Display each user in the leaderboard
+            leaderboardData.forEach((user, index) => {
+                const row = document.createElement('tr');
+                
+                // Highlight the current user or selected user
+                const isCurrentUser = user.username === (selectedUser === 'current' ? currentUser : selectedUser);
+                
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${isCurrentUser ? `<strong>${user.username}</strong>` : user.username}</td>
+                    <td>${user.tokens.toFixed(0)}</td>
+                `;
+                
+                if (isCurrentUser) {
+                    row.className = 'highlight';
+                }
+                
+                leaderboardBody.appendChild(row);
+            });
+        }
+    </script>
+</body>
+</html>

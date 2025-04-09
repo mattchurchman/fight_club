@@ -1,0 +1,759 @@
+*{
+    box-sizing: border-box;
+    font-family: 'Roboto', Arial, sans-serif;
+}
+body {
+    margin: 0;
+    padding: 20px;
+    background-color: #1a1a1a;
+    color: white;
+}
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+.betting-panel {
+    background-color: #2a2a2a;
+    border-radius: 8px;
+    padding: 20px;
+}
+h1, h2, h3 {
+    color: #ffcc00;
+    margin-top: 0;
+}
+.tokens-info {
+    background-color: #333;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+.fight-card {
+    margin-bottom: 30px;
+}
+.fight {
+    background-color: #333;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+.fighters {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+.fighter {
+    text-align: center;
+    width: 45%;
+}
+.fighter img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #555;
+    margin-bottom: 5px;
+}
+.fighter-name {
+    font-weight: bold;
+    font-size: 16px;
+}
+.fighter-record {
+    font-size: 12px;
+    color: #aaa;
+}
+.odds {
+    font-size: 14px;
+    color: #ff6b6b;
+    margin-top: 5px;
+}
+.odds.positive {
+    color: #6bff6b;
+}
+.betting-controls {
+    margin-top: 15px;
+}
+.token-slider {
+    width: 100%;
+    margin: 10px 0;
+}
+.token-value {
+    font-weight: bold;
+    color: #ffcc00;
+}
+.method-selection, .confidence-selection, .bleed-selection {
+    margin-top: 10px;
+}
+select, button, textarea {
+    background-color: #444;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+select:hover, button:hover {
+    background-color: #555;
+}
+button.primary {
+    background-color: #ffcc00;
+    color: #000;
+    font-weight: bold;
+    margin-top: 20px;
+    padding: 10px 20px;
+}
+button.primary:hover {
+    background-color: #e6b800;
+}
+.error {
+    color: #ff6b6b;
+    margin-top: 10px;
+}
+.json-output {
+    margin-top: 20px;
+}
+textarea {
+    width: 100%;
+    height: 150px;
+    margin-top: 10px;
+    font-family: monospace;
+    resize: vertical;
+}
+.copy-btn {
+    margin-top: 10px;
+}
+.json-input {
+    margin-bottom: 20px;
+}
+.data-paste-section {
+    background-color: #333;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+
+body {
+    margin: 0;
+    padding: 20px;
+    background-color: #1a1a1a;
+    color: white;
+}
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+.card-entry-panel {
+    background-color: #2a2a2a;
+    border-radius: 8px;
+    padding: 20px;
+}
+h1, h2, h3 {
+    color: #ffcc00;
+    margin-top: 0;
+}
+.form-section {
+    background-color: #333;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+.form-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+.form-group {
+    flex: 1;
+    min-width: 200px;
+}
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+input[type="text"],
+input[type="number"],
+input[type="url"] {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    border: none;
+    background-color: #444;
+    color: white;
+}
+input[type="checkbox"] {
+    margin-right: 5px;
+}
+button {
+    background-color: #444;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+button:hover {
+    background-color: #555;
+}
+button.primary {
+    background-color: #ffcc00;
+    color: #000;
+    font-weight: bold;
+    padding: 10px 20px;
+}
+button.primary:hover {
+    background-color: #e6b800;
+}
+button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+.error {
+    color: #ff6b6b;
+    font-size: 14px;
+    margin-top: 5px;
+}
+.fight-list {
+    margin: 20px 0;
+}
+.fight-item {
+    background-color: #333;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.fight-item-details {
+    flex: 1;
+}
+.fight-actions {
+    display: flex;
+    gap: 5px;
+}
+.json-output {
+    margin-top: 20px;
+}
+textarea {
+    width: 100%;
+    height: 200px;
+    background-color: #333;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 10px;
+    font-family: monospace;
+    resize: vertical;
+}
+.copy-btn {
+    margin-top: 10px;
+}
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+}
+.notification.success {
+    background-color: #4CAF50;
+}
+.notification.error {
+    background-color: #f44336;
+}
+.notification.show {
+    opacity: 1;
+}
+.actions-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+#saveCardBtn {
+    background-color: #4CAF50;
+}
+#loadCardList {
+    margin-top: 20px;
+}
+.saved-card-item {
+    background-color: #333;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+body {
+    margin: 0;
+    padding: 20px;
+    background-color: #1a1a1a;
+    color: white;
+}
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.results-panel {
+    background-color: #2a2a2a;
+    border-radius: 8px;
+    padding: 20px;
+}
+h1, h2, h3 {
+    color: #ffcc00;
+    margin-top: 0;
+}
+.fight {
+    background-color: #333;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+select, button {
+    background-color: #444;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+select:hover, button:hover {
+    background-color: #555;
+}
+button.primary {
+    background-color: #ffcc00;
+    color: #000;
+    font-weight: bold;
+    margin-top: 20px;
+    padding: 10px 20px;
+}
+button.primary:hover {
+    background-color: #e6b800;
+}
+.results-panel table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+.results-panel th, .results-panel td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #444;
+}
+.results-panel th {
+    color: #ffcc00;
+}
+.winner {
+    color: #6bff6b;
+    font-weight: bold;
+}
+.loser {
+    color: #ff6b6b;
+    text-decoration: line-through;
+}
+.bonus {
+    color: #6b93ff;
+}
+.json-input {
+    width: 100%;
+    height: 100px;
+    background-color: #333;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 15px;
+    font-family: monospace;
+}
+.json-output {
+    width: 100%;
+    height: 100px;
+    background-color: #333;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 15px;
+    font-family: monospace;
+}
+.error {
+    color: #ff6b6b;
+    margin-top: 10px;
+}
+/*
+body {
+    margin: 0;
+    padding: 20px;
+    background-color: #1a1a1a;
+    color: white;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.container {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+    */
+.auth-panel {
+    background-color: #2a2a2a;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+h1, h2, h3 {
+    color: #ffcc00;
+    margin-top: 0;
+    text-align: center;
+}
+.form-section {
+    background-color: #333;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+.form-group {
+    margin-bottom: 15px;
+}
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    border-radius: 4px;
+    border: none;
+    background-color: #444;
+    color: white;
+    font-size: 16px;
+}
+input[type="checkbox"] {
+    margin-right: 5px;
+}
+.remember-me {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+button {
+    background-color: #444;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+    font-size: 14px;
+}
+button:hover {
+    background-color: #555;
+}
+button.primary {
+    background-color: #ffcc00;
+    color: #000;
+    font-weight: bold;
+    padding: 12px 20px;
+    font-size: 16px;
+    width: 100%;
+}
+button.primary:hover {
+    background-color: #e6b800;
+}
+button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+.error {
+    color: #ff6b6b;
+    font-size: 14px;
+    margin-top: 5px;
+    min-height: 20px;
+}
+.success {
+    color: #4CAF50;
+    font-size: 14px;
+    margin-top: 5px;
+}
+.actions-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+.forgot-password, .switch-form {
+    color: #ffcc00;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 14px;
+}
+.forgot-password:hover, .switch-form:hover {
+    color: #e6b800;
+}
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+}
+.password-field {
+    position: relative;
+}
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+}
+.notification.success {
+    background-color: #4CAF50;
+}
+.notification.error {
+    background-color: #f44336;
+}
+.notification.show {
+    opacity: 1;
+}
+.hidden {
+    display: none;
+}
+.strength-meter {
+    height: 5px;
+    width: 100%;
+    background-color: #333;
+    margin-top: 5px;
+    border-radius: 2px;
+    overflow: hidden;
+}
+.strength-meter-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+.weak {
+    background-color: #f44336;
+    width: 25%;
+}
+.medium {
+    background-color: #ffeb3b;
+    width: 50%;
+}
+.strong {
+    background-color: #4CAF50;
+    width: 100%;
+}
+.password-requirements {
+    font-size: 12px;
+    color: #888;
+    margin-top: 5px;
+}
+
+/* Additional styles for sortable items */
+.sortable-item {
+    cursor: move;
+    padding: 10px;
+    border: 1px solid #ddd;
+    margin-bottom: 5px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+}
+
+/* Slider style for center-based position */
+.fighter-slider {
+    width: 100%;
+}
+
+.slider-container {
+    position: relative;
+    padding: 0 10px;
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    font-size: 0.8em;
+}
+
+.slider-value {
+    text-align: center;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.fighters-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.sortable-fight {
+    padding: 12px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    cursor: move;
+    transition: all 0.2s ease;
+}
+
+.sortable-fight:hover {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.sortable-fight .fighters {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.sortable-fight .fighter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 120px;
+}
+
+.sortable-fight .fighter-img {
+    margin-bottom: 8px;
+}
+
+.sortable-fight .fighter-name {
+    font-weight: bold;
+    text-align: center;
+}
+
+.sortable-fight .fighter-record {
+    font-size: 0.85em;
+    color: #666;
+}
+
+.sortable-fight .betting-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.bidirectional-slider-container {
+    display: flex;
+    align-items: center;
+}
+
+.fighter-label {
+    width: 25%;
+    text-align: center;
+    font-size: 0.9em;
+}
+
+.bidirectional-slider {
+    width: 50%;
+}
+
+.token-amount {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.token-amount div.fighter1-tokens,
+.token-amount div.fighter2-tokens {
+    width: 50%;
+    padding: 5px;
+    text-align: center;
+}
+
+.token-amount div.fighter1-tokens {
+    text-align: left;
+}
+
+.token-amount div.fighter2-tokens {
+    text-align: right;
+}
+
+.confidence-rank {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 3px 8px;
+    background-color: #f0f0f0;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.fight-method {
+    margin-top: 10px;
+}
+
+.ghost {
+    opacity: 0.4;
+}
+
+.selector-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.selector-container select {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.results-panel {
+    margin-bottom: 30px;
+}
+
+.leaderboard {
+    margin-top: 30px;
+}
+
+.winner {
+    color: green;
+    font-weight: bold;
+}
+
+.loser {
+    color: red;
+}
+
+.bonus {
+    display: block;
+    font-size: 0.8em;
+    color: #666;
+    margin-top: 3px;
+}
