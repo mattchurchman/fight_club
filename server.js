@@ -7,6 +7,12 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { Pool } = require('pg'); // PostgreSQL client
 
+console.log('Starting UFC Card Entry application');
+console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
+console.log(`PORT: ${process.env.PORT}`);
+console.log(`Database URL exists: ${!!process.env.DATABASE_URL}`);
+console.log(`Session Secret exists: ${!!process.env.SESSION_SECRET}`);
+
 // Initialize express app
 const app = express();
 const port = process.env.PORT || 3000;
@@ -14,9 +20,10 @@ const port = process.env.PORT || 3000;
 // Database configuration
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' 
-    ? { rejectUnauthorized: false } 
-    : false
+  ssl: { 
+    rejectUnauthorized: false 
+  } 
+
 });
 
 
@@ -30,9 +37,7 @@ pool.on('error', (err) => {
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-if (process.env.NODE_ENV === 'production') {
-  app.set('trust proxy', 1); 
-}
+app.set('trust proxy', 1);
 
 // Session configuration with PostgreSQL
 const expressSession = require('express-session');
