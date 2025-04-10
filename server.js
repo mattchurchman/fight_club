@@ -13,7 +13,7 @@ const port = process.env.PORT || 3000;
 
 // Database configuration
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:1234@localhost:5432/postgres',
+  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:cjIpWiDJFYOUZDuasNycVCTAkDMhnuNt@postgres.railway.internal:5432/railway',
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
