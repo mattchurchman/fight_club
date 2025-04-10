@@ -7,13 +7,15 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { Pool } = require('pg'); // PostgreSQL client
 
+console.log('All environment variables:', Object.keys(process.env));
+
 // Initialize express app
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Database configuration
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:1234@localhost:5432/postgres',
+  connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
