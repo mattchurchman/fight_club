@@ -50,6 +50,7 @@ app.use(session({
   saveUninitialized: false,
   cookie: { 
     secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax', // Add this line
     maxAge: 1000 * 60 * 60 * 24 * 7 // 1 week
   }
 }));
@@ -158,6 +159,7 @@ const isAuthenticated = (req, res, next) => {
 };
 
 // Routes
+app.set('trust proxy', 1); //Add this line
 
 // Serve the main HTML file
 app.get('/', (req, res) => {
