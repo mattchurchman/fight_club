@@ -13,8 +13,10 @@ const port = process.env.PORT || 3000;
 
 // Database configuration
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:cjIpWiDJFYOUZDuasNycVCTAkDMhnuNt@postgres.railway.internal:5432/railway',
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' 
+    ? { rejectUnauthorized: false } 
+    : false
 });
 
 
@@ -28,6 +30,10 @@ pool.on('error', (err) => {
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1); 
+}
+
 // Session configuration with PostgreSQL
 const expressSession = require('express-session');
 const pgSession = require('connect-pg-simple')(expressSession);
@@ -35,16 +41,34 @@ const pgSession = require('connect-pg-simple')(expressSession);
 app.use(session({
   store: new pgSession({
     pool: pool,
-    tableName: 'session' // Session table name
+    tableName: 'session',
+    createTableIfMissing: true
   }),
-  secret: process.env.SESSION_SECRET || crypto.randomBytes(64).toString('hex'),
+  secret: process.env.SESSION_SECRET || 'imjamescornelmartinez',
   resave: false,
   saveUninitialized: false,
   cookie: { 
     secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax', 
     maxAge: 1000 * 60 * 60 * 24 * 7 // 1 week
   }
 }));
+
+// Add at the top of your file
+function checkRequiredEnvVars() {
+  const required = ['DATABASE_URL', 'SESSION_SECRET'];
+  const missing = required.filter(name => !process.env[name]);
+  
+  if (missing.length > 0) {
+    console.error(`Missing required environment variables: ${missing.join(', ')}`);
+    process.exit(1);
+  }
+}
+
+// Call this early in your app startup
+if (process.env.NODE_ENV === 'production') {
+  checkRequiredEnvVars();
+}
 
 // Start the server
 app.listen(port, () => {
