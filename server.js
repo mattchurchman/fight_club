@@ -44,7 +44,7 @@ app.use(session({
     tableName: 'session',
     createTableIfMissing: true
   }),
-  secret: process.env.SESSION_SECRET || 'imjamescornelmartinez',
+  secret: process.env.SESSION_SECRET || '9ded3e07971e3d3d44dca8bdab24f813b7a65525815f8a78898e823fbd059218840dd64e006f49949eecfbbf9627d0705739bcb408f00332b162ac417df3fcee',
   resave: false,
   saveUninitialized: false,
   cookie: { 
