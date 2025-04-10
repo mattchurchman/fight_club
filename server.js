@@ -7,23 +7,14 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { Pool } = require('pg'); // PostgreSQL client
 
-console.log('Starting UFC Card Entry application');
-console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
-console.log(`PORT: ${process.env.PORT}`);
-console.log(`Database URL exists: ${!!process.env.DATABASE_URL}`);
-console.log(`Session Secret exists: ${!!process.env.SESSION_SECRET}`);
-
 // Initialize express app
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Database configuration
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { 
-    rejectUnauthorized: false 
-  } 
-
+  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:1234@localhost:5432/postgres',
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
 
@@ -37,8 +28,6 @@ pool.on('error', (err) => {
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.set('trust proxy', 1);
-
 // Session configuration with PostgreSQL
 const expressSession = require('express-session');
 const pgSession = require('connect-pg-simple')(expressSession);
@@ -46,34 +35,16 @@ const pgSession = require('connect-pg-simple')(expressSession);
 app.use(session({
   store: new pgSession({
     pool: pool,
-    tableName: 'session',
-    createTableIfMissing: true
+    tableName: 'session' // Session table name
   }),
-  secret: process.env.SESSION_SECRET || '9ded3e07971e3d3d44dca8bdab24f813b7a65525815f8a78898e823fbd059218840dd64e006f49949eecfbbf9627d0705739bcb408f00332b162ac417df3fcee',
+  secret: process.env.SESSION_SECRET || crypto.randomBytes(64).toString('hex'),
   resave: false,
   saveUninitialized: false,
   cookie: { 
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax', 
     maxAge: 1000 * 60 * 60 * 24 * 7 // 1 week
   }
 }));
-
-// Add at the top of your file
-function checkRequiredEnvVars() {
-  const required = ['DATABASE_URL', 'SESSION_SECRET'];
-  const missing = required.filter(name => !process.env[name]);
-  
-  if (missing.length > 0) {
-    console.error(`Missing required environment variables: ${missing.join(', ')}`);
-    process.exit(1);
-  }
-}
-
-// Call this early in your app startup
-if (process.env.NODE_ENV === 'production') {
-  checkRequiredEnvVars();
-}
 
 // Start the server
 app.listen(port, () => {
