@@ -7,6 +7,12 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { Pool } = require('pg'); // PostgreSQL client
 
+// Console logs to check connection
+console.log('Starting UFC Card Entry application');
+console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
+console.log(`PORT: ${process.env.PORT}`);
+console.log(`Database URL exists: ${!!process.env.DATABASE_URL}`);
+console.log(`Session Secret exists: ${!!process.env.SESSION_SECRET}`);
 console.log('All environment variables:', Object.keys(process.env));
 
 // Initialize express app
