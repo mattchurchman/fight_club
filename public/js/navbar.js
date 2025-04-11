@@ -6,6 +6,12 @@ document.addEventListener("DOMContentLoaded", function () {
             // Insert the navbar HTML
             document.getElementById("navbar-container").innerHTML = html;
             
+            // IMPORTANT: Hide admin links by default until auth check completes
+            const authLinks = document.querySelectorAll('.admin');
+            authLinks.forEach(link => {
+                link.style.display = 'none';
+            });
+            
             // Setup mobile menu functionality after navbar loads
             setupMobileMenu();
             
@@ -41,9 +47,22 @@ function setupMobileMenu() {
 // Auth status check function
 async function checkAuthStatus() {
     try {
+        // Set default state while checking
+        const authStatusElement = document.getElementById('auth-status');
+        if (authStatusElement) {
+            authStatusElement.textContent = 'Checking authentication...';
+        }
+        
+        // Hide admin links by default until verified
+        const authLinks = document.querySelectorAll('.admin');
+        authLinks.forEach(link => {
+            link.style.display = 'none';
+        });
+
         const response = await fetch('/api/auth/status', {
             method: 'GET',
-            credentials: 'include' // Ensures cookies are sent with request
+            credentials: 'include', // Ensures cookies are sent with request
+            cache: 'no-store' // Prevent caching of authentication status
         });
 
         if (!response.ok) {
@@ -52,25 +71,17 @@ async function checkAuthStatus() {
 
         const data = await response.json();
         
-        // Find the auth-status element
-        const authStatusElement = document.getElementById('auth-status');
-        
-        // Only update if the element exists
+        // Update auth status display
         if (authStatusElement) {
             authStatusElement.textContent = data.authenticated 
                 ? `Logged in as: ${data.username}` 
                 : 'Not logged in';
-        } else {
-            console.warn('auth-status element not found in the DOM');
         }
 
-        // Handle admin links visibility
-        const authLinks = document.querySelectorAll('.admin');
-        if (authLinks.length > 0) {
-            // Only show admin links for user "Church"
-            const isAdmin = data.authenticated && data.username === 'Church';
+        // Only show admin links for user "Church" when authenticated
+        if (data.authenticated && data.username === 'Church') {
             authLinks.forEach(link => {
-                link.style.display = isAdmin ? 'inline' : 'none';
+                link.style.display = 'inline';
             });
         }
         
@@ -84,14 +95,25 @@ async function checkAuthStatus() {
             }
         }
 
+        console.log("Auth status check complete:", data);
+        return data; // Return the data for potential further use
+
     } catch (error) {
         console.error('Error checking authentication:', error);
         
-        // Safely update the auth status element if it exists
+        // Set error state
         const authStatusElement = document.getElementById('auth-status');
         if (authStatusElement) {
             authStatusElement.textContent = 'Authentication error';
         }
+        
+        // Ensure admin links stay hidden on error
+        const authLinks = document.querySelectorAll('.admin');
+        authLinks.forEach(link => {
+            link.style.display = 'none';
+        });
+        
+        return { authenticated: false }; // Return default state
     }
 }
 
@@ -103,7 +125,10 @@ function logout() {
     })
     .then(response => {
         if (response.ok) {
-            window.location.href = '/';  // Redirect to home page after logout
+            // Force refresh auth status after logout
+            checkAuthStatus().then(() => {
+                window.location.href = '/';  // Redirect to home page after logout
+            });
         } else {
             console.error('Logout failed');
         }
