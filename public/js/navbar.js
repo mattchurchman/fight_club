@@ -6,13 +6,39 @@ document.addEventListener("DOMContentLoaded", function () {
             // Insert the navbar HTML
             document.getElementById("navbar-container").innerHTML = html;
             
+            // Setup mobile menu functionality after navbar loads
+            setupMobileMenu();
+            
             // Only after navbar is loaded, check auth status
             checkAuthStatus();
         })
         .catch(error => console.error("Error loading navbar:", error));
 });
 
-// Moved outside the DOMContentLoaded to avoid nesting callbacks
+// Setup hamburger menu functionality
+function setupMobileMenu() {
+    const hamburger = document.querySelector('.hamburger');
+    const navLinks = document.querySelector('.nav-links');
+    
+    if (hamburger && navLinks) {
+        hamburger.addEventListener('click', () => {
+            // Toggle active class for mobile menu
+            navLinks.classList.toggle('active');
+            hamburger.classList.toggle('active');
+        });
+        
+        // Close menu when a link is clicked
+        const navItems = document.querySelectorAll('.nav-links a');
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navLinks.classList.remove('active');
+                hamburger.classList.remove('active');
+            });
+        });
+    }
+}
+
+// Auth status check function
 async function checkAuthStatus() {
     try {
         const response = await fetch('/api/auth/status', {
@@ -47,6 +73,16 @@ async function checkAuthStatus() {
                 link.style.display = isAdmin ? 'inline' : 'none';
             });
         }
+        
+        // Update login button if user is authenticated
+        if (data.authenticated) {
+            const loginBtn = document.querySelector('.login-btn');
+            if (loginBtn) {
+                loginBtn.textContent = 'Account';
+                // You might want to change the href too
+                // loginBtn.href = "account.html";
+            }
+        }
 
     } catch (error) {
         console.error('Error checking authentication:', error);
@@ -59,7 +95,7 @@ async function checkAuthStatus() {
     }
 }
 
-// Add a logout function if you need it
+// Logout function
 function logout() {
     fetch('/api/auth/logout', {
         method: 'POST',
