@@ -1017,6 +1017,22 @@ app.get('/api/user-bets/:username/:eventName', async (req, res) => {
   }
 });
 
+// Get current logged-in username
+app.get('/api/user/current', async (req, res) => {
+  try {
+    // Check if user is authenticated and session exists
+    if (!req.session || !req.session.user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    
+    // Return username from session
+    return res.json({ username: req.session.user.username });
+  } catch (error) {
+    console.error('Error fetching current user:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Catch-all route to serve the main html
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
