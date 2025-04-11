@@ -996,6 +996,27 @@ app.get('/api/schedule', async (req, res) => {
   }
 });
 
+// Get user bet data for a specific event
+app.get('/api/user-bets/:username/:eventName', async (req, res) => {
+  try {
+    const { username, eventName } = req.params;
+    
+    const result = await pool.query(
+      'SELECT json_data FROM user_bets WHERE username = $1 AND event_name = $2',
+      [username, eventName]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'No existing bet found for this user and event' });
+    }
+    
+    return res.json(result.rows[0].json_data);
+  } catch (error) {
+    console.error('Error fetching user bet data:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Catch-all route to serve the main html
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

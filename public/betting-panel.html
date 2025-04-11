@@ -66,6 +66,7 @@
         let totalTokens = 1000;
         let remainingTokens = 1000;
         let eventTitle = "UFC Betting Panel";
+        let existingBetData = null; // Add variable to store existing bet data
         
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
@@ -119,7 +120,6 @@
                 return false;
             }
         }
-
         
         // Check if user has already submitted bets for this event
         async function checkExistingBets(eventTitle) {
@@ -142,35 +142,77 @@
             }
         }
 
+        // Fetch existing bet data for the current user and event
+        async function fetchExistingBetData(eventTitle) {
+            try {
+                // First check if user is authenticated
+                const isAuthenticated = await checkAuthStatus();
+                if (!isAuthenticated) {
+                    return null;
+                }
+                
+                // Get the current username
+                const userResponse = await fetch('/api/user/current', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (!userResponse.ok) {
+                    throw new Error('Failed to get current user');
+                }
+                
+                const userData = await userResponse.json();
+                const username = userData.username;
+                
+                // Now fetch the bet data
+                const response = await fetch(`/api/user-bets/${username}/${encodeURIComponent(eventTitle)}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (response.status === 404) {
+                    // No existing bet
+                    return null;
+                }
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch existing bet data');
+                }
+                
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error fetching existing bet data:', error);
+                return null;
+            }
+        }
         
         // Fetch the latest fight card from the API
-        function fetchLatestCard() {
-            fetch('/api/cards/latest')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch latest card');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    jsonString = JSON.stringify(data);                    
-
-                    loadFightCardData();
-                })
-                .catch(error => {
-                    //console.error('Error:', error);
-                    //document.getElementById('card-title').textContent = 'Error loading card';
-                    //document.getElementById('card-info').innerHTML += `<p class="error">${error.message}</p>`;
-                });
+        async function fetchLatestCard() {
+            try {
+                const response = await fetch('/api/cards/latest');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch latest card');
+                }
+                
+                const data = await response.json();
+                jsonString = JSON.stringify(data);
+                
+                // Check for existing bet data
+                const authenticated = await checkAuthStatus();
+                if (authenticated && data.title) {
+                    existingBetData = await fetchExistingBetData(data.title);
+                    console.log('Existing bet data:', existingBetData);
+                }
+                
+                loadFightCardData();
+            } catch (error) {
+                console.error('Error fetching latest card:', error);
+            }
         }
-
 
         // Load fight card data from JSON
         function loadFightCardData() {
-            //const jsonInput = document.getElementById('json-input').value;
-            //const errorElement = document.getElementById('load-error');
-            //errorElement.textContent = '';
-            
             try {
                 const data = JSON.parse(jsonString);
                 
@@ -200,8 +242,116 @@
                 // Enable submit button
                 document.getElementById('submit-bets').disabled = false;
                 
+                // Populate form with existing bet data if available
+                if (existingBetData) {
+                    populateExistingBetData(existingBetData);
+                }
+                
             } catch (error) {
-                errorElement.textContent = `Error loading data: ${error.message}`;
+                console.error(`Error loading data: ${error.message}`);
+            }
+        }
+        
+        // Populate form with existing bet data
+        function populateExistingBetData(betData) {
+            try {
+                // Add a notification to inform the user they're editing an existing bet
+                const notification = document.createElement('div');
+                notification.className = 'existing-bet-notification';
+                notification.style.backgroundColor = '#f0f8ff';
+                notification.style.padding = '10px';
+                notification.style.marginBottom = '15px';
+                notification.style.borderRadius = '5px';
+                notification.style.border = '1px solid #add8e6';
+                notification.style.fontWeight = 'bold';
+                notification.textContent = 'You are editing an existing bet for this event.';
+                
+                const fightCard = document.getElementById('fight-card');
+                fightCard.insertBefore(notification, fightCard.firstChild);
+                
+                // Populate fights data
+                if (betData.userBets) {
+                    for (const fightId in betData.userBets) {
+                        const bet = betData.userBets[fightId];
+                        
+                        // Make sure the fight still exists in the current card
+                        if (userBets[fightId]) {
+                            // Update fighter selection
+                            if (bet.fighter) {
+                                const fighterSelect = document.querySelector(`.fighter-select[data-fight-id="${fightId}"]`);
+                                if (fighterSelect) {
+                                    fighterSelect.value = bet.fighter;
+                                    userBets[fightId].fighter = bet.fighter;
+                                }
+                            }
+                            
+                            // Update method selection
+                            if (bet.method) {
+                                const methodSelect = document.querySelector(`.method-select[data-fight-id="${fightId}"]`);
+                                if (methodSelect) {
+                                    methodSelect.value = bet.method;
+                                    userBets[fightId].method = bet.method;
+                                }
+                            }
+                            
+                            // Update token allocation
+                            if (bet.tokens) {
+                                const tokenSlider = document.querySelector(`.token-slider[data-fight-id="${fightId}"]`);
+                                if (tokenSlider) {
+                                    tokenSlider.value = bet.tokens;
+                                    updateTokens(fightId, bet.tokens);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Populate confidence order
+                if (betData.confidenceOrder && Array.isArray(betData.confidenceOrder)) {
+                    confidenceOrder = [...betData.confidenceOrder];
+                    
+                    // Reorder the DOM elements
+                    const confidenceList = document.getElementById('confidence-list');
+                    const items = Array.from(confidenceList.children);
+                    
+                    // Sort the items based on the confidence order
+                    items.sort((a, b) => {
+                        return confidenceOrder.indexOf(parseInt(a.dataset.fightId)) - 
+                               confidenceOrder.indexOf(parseInt(b.dataset.fightId));
+                    });
+                    
+                    // Clear and append in new order
+                    confidenceList.innerHTML = '';
+                    items.forEach(item => confidenceList.appendChild(item));
+                    
+                    // Update the rank displays
+                    updateConfidenceRanks();
+                }
+                
+                // Populate bleed pick
+                if (betData.bleedPick && betData.bleedPick.fightId && betData.bleedPick.fighterId) {
+                    bleedPick = {
+                        fightId: parseInt(betData.bleedPick.fightId),
+                        fighterId: parseInt(betData.bleedPick.fighterId)
+                    };
+                    
+                    // Update the bleed selection dropdowns
+                    const bleedFightSelect = document.getElementById('bleed-fight');
+                    bleedFightSelect.value = bleedPick.fightId;
+                    
+                    // Trigger the change event to update fighter options
+                    const event = new Event('change');
+                    bleedFightSelect.dispatchEvent(event);
+                    
+                    // Select the fighter after options are populated
+                    setTimeout(() => {
+                        const bleedFighterSelect = document.getElementById('bleed-fighter');
+                        bleedFighterSelect.value = `${bleedPick.fightId}_${bleedPick.fighterId}`;
+                    }, 100);
+                }
+                
+            } catch (error) {
+                console.error('Error populating existing bet data:', error);
             }
         }
         
@@ -520,18 +670,18 @@
             
             // Check if user has already submitted bets for this event
             const hasExistingBets = await checkExistingBets(eventTitle);
-            console.log(eventTitle)
-            console.log(hasExistingBets)
+            console.log(eventTitle);
+            console.log(hasExistingBets);
 
             // Check if event has started
             const eventStarted = await checkEventStart(eventTitle);
-            console.log(eventStarted)
+            console.log(eventStarted);
 
             // Generate JSON data for the results simulator
             userBetData = generateBettingJson();
             
-            console.log('existing bets: ', hasExistingBets)
-            console.log('event started: ', eventStarted)
+            console.log('existing bets: ', hasExistingBets);
+            console.log('event started: ', eventStarted);
 
             // Allow updates if the card hasn't started
             if(!eventStarted) {
@@ -594,7 +744,7 @@
                 totalTokens: totalTokens
             };
             
-            console.log('betting data: ', bettingData)
+            console.log('betting data: ', bettingData);
 
             const jsonString = JSON.stringify(bettingData, null, 2);
             document.getElementById('bet-json').value = jsonString;
