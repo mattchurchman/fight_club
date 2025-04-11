@@ -6,17 +6,36 @@ document.addEventListener("DOMContentLoaded", function () {
             // Insert the navbar HTML
             document.getElementById("navbar-container").innerHTML = html;
             
-            // IMPORTANT: Hide admin links by default until auth check completes
+            // Hide admin links by default until auth check completes
             const authLinks = document.querySelectorAll('.admin');
             authLinks.forEach(link => {
                 link.style.display = 'none';
             });
             
+            // Hide auth status message until we have real data
+            const authStatusElement = document.getElementById('auth-status');
+            if (authStatusElement) {
+                // Make it invisible but preserve layout space
+                authStatusElement.style.visibility = 'hidden';
+            }
+            
             // Setup mobile menu functionality after navbar loads
             setupMobileMenu();
             
             // Only after navbar is loaded, check auth status
-            checkAuthStatus();
+            checkAuthStatus().then(() => {
+                // Show the auth status once we have data
+                if (authStatusElement) {
+                    authStatusElement.style.visibility = 'visible';
+                    
+                    // Add a subtle fade-in effect
+                    authStatusElement.style.opacity = '0';
+                    authStatusElement.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => {
+                        authStatusElement.style.opacity = '1';
+                    }, 10);
+                }
+            });
         })
         .catch(error => console.error("Error loading navbar:", error));
 });
@@ -47,18 +66,9 @@ function setupMobileMenu() {
 // Auth status check function
 async function checkAuthStatus() {
     try {
-        // Set default state while checking
         const authStatusElement = document.getElementById('auth-status');
-        if (authStatusElement) {
-            authStatusElement.textContent = 'Checking authentication...';
-        }
         
-        // Hide admin links by default until verified
-        const authLinks = document.querySelectorAll('.admin');
-        authLinks.forEach(link => {
-            link.style.display = 'none';
-        });
-
+        // Make the fetch request
         const response = await fetch('/api/auth/status', {
             method: 'GET',
             credentials: 'include', // Ensures cookies are sent with request
@@ -71,17 +81,23 @@ async function checkAuthStatus() {
 
         const data = await response.json();
         
-        // Update auth status display
+        // Update auth status display only now that we have data
         if (authStatusElement) {
             authStatusElement.textContent = data.authenticated 
                 ? `Logged in as: ${data.username}` 
                 : 'Not logged in';
         }
 
+        // Handle admin links visibility
+        const authLinks = document.querySelectorAll('.admin');
         // Only show admin links for user "Church" when authenticated
         if (data.authenticated && data.username === 'Church') {
             authLinks.forEach(link => {
                 link.style.display = 'inline';
+            });
+        } else {
+            authLinks.forEach(link => {
+                link.style.display = 'none';
             });
         }
         
@@ -95,7 +111,6 @@ async function checkAuthStatus() {
             }
         }
 
-        console.log("Auth status check complete:", data);
         return data; // Return the data for potential further use
 
     } catch (error) {
