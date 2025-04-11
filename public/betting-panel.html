@@ -93,6 +93,7 @@
                 }
                 
                 const data = await response.json();
+                console.log('auth status: ', data)
                 return data.authenticated;
             } catch (error) {
                 console.error('Error checking authentication status:', error);
@@ -113,7 +114,7 @@
                 }
                 
                 const data = await response.json();
-                console.log('js ',data)
+                console.log('event started: ',data)
                 return data.exists;
             } catch (error) {
                 console.error('Error checking event start:', error);
@@ -134,7 +135,7 @@
                 }
                 
                 const data = await response.json();
-                console.log('js ',data)
+                console.log('check existing bets: ',data)
                 return data.exists;
             } catch (error) {
                 console.error('Error checking existing bets:', error);
@@ -163,6 +164,7 @@
                 
                 const userData = await userResponse.json();
                 const username = userData.username;
+                console.log('user current: ', username)
                 
                 // Now fetch the bet data
                 const response = await fetch(`/api/user-bets/${username}/${encodeURIComponent(eventTitle)}`, {
@@ -180,7 +182,7 @@
                 }
                 
                 const data = await response.json();
-                console.log(data)
+                console.log('user bets for event: ', data)
                 return data;
             } catch (error) {
                 console.error('Error fetching existing bet data:', error);
@@ -198,12 +200,13 @@
                 
                 const data = await response.json();
                 jsonString = JSON.stringify(data);
+                console.log('card latest:', jsonString);
                 
                 // Check for existing bet data
                 const authenticated = await checkAuthStatus();
                 if (authenticated && data.title) {
                     existingBetData = await fetchExistingBetData(data.title);
-                    console.log('Existing bet data:', existingBetData);
+                    console.log('existing bet data:', existingBetData);
                 }
                 
                 loadFightCardData();
