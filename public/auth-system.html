@@ -204,16 +204,17 @@
             return re.test(String(email).toLowerCase());
         }
         
+        /*
         function validatePassword(password) {
             return typeof password === 'string' && password.length === 4;
         }
-
-        /*
+        */
+        
         function validatePassword(password) {
             // At least 8 characters, must include a letter, a number, and a special character
             const re = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
             return re.test(String(password));
-        }*/
+        }
         
         function validateField(inputId, errorMessage) {
             const input = document.getElementById(inputId);
@@ -252,7 +253,7 @@
                 errorElement.textContent = 'Password is required.';
                 return false;
             } else if (!validatePassword(input.value)) {
-                errorElement.textContent = 'Password must be at least 4 characters long.';
+                errorElement.textContent = 'Password must be at least 8 characters, must include a letter, a number, and a special character.';
                 return false;
             } else {
                 errorElement.textContent = '';
