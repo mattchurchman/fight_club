@@ -12,14 +12,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 link.style.display = 'none';
             });
             
-            /*
+            
             // Hide auth status message until we have real data
             const authStatusElement = document.getElementById('auth-status');
             if (authStatusElement) {
                 // Make it invisible but preserve layout space
                 authStatusElement.style.visibility = 'hidden';
             }
-            */
+            
             console.log('here')
             // Setup mobile menu functionality after navbar loads
             setupMobileMenu();
@@ -28,6 +28,7 @@ document.addEventListener("DOMContentLoaded", function () {
             checkAuthStatus().then(() => {
                 // Show the auth status once we have data
                 console.log('here2')
+                console.log('authStatusElement: ', authStatusElement)
                 if (authStatusElement) {
                     authStatusElement.style.visibility = 'visible';
                     
@@ -90,7 +91,7 @@ async function checkAuthStatus() {
                 ? `Logged in as: ${data.username}` 
                 : 'Not logged in';
         }
-        console.log('authStatusElement: ', authStatusElement.textContent)
+        console.log('authStatusElementText: ', authStatusElement.textContent)
 
         // Handle admin links visibility
         const authLinks = document.querySelectorAll('.admin');
