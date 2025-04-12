@@ -29,6 +29,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Show the auth status once we have data
                 console.log('here2')
                 console.log('authStatusElement: ', authStatusElement)
+                console.log('bool: ', authStatusElement ? authStatusElement : "No username")
                 if (authStatusElement) {
                     authStatusElement.style.visibility = 'visible';
                     
