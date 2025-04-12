@@ -15,29 +15,12 @@ document.addEventListener("DOMContentLoaded", function () {
             
             // Hide auth status message until we have real data
             const authStatusElement = document.getElementById('auth-status');
-            /*
-            if (authStatusElement) {
-                // Make it invisible but preserve layout space
-                authStatusElement.style.visibility = 'hidden';
-            }
-            */
             
             console.log('here')
             // Setup mobile menu functionality after navbar loads
             setupMobileMenu();
             console.log('here1')
-
-            if (authStatusElement) {
-                authStatusElement.style.visibility = 'visible';
-                
-                // Add a subtle fade-in effect
-                authStatusElement.style.opacity = '0';
-                authStatusElement.style.transition = 'opacity 0.3s ease';
-                setTimeout(() => {
-                    authStatusElement.style.opacity = '1';
-                }, 10);
-            }
-            /*
+            
             // Only after navbar is loaded, check auth status
             checkAuthStatus().then(() => {
                 // Show the auth status once we have data
@@ -54,7 +37,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     }, 10);
                 }
             });
-            */
         })
         .catch(error => console.error("Error loading navbar:", error));
 });
@@ -122,18 +104,6 @@ async function checkAuthStatus() {
                 link.style.display = 'none';
             });
         }
-
-        /*
-        // Update login button if user is authenticated
-        if (data.authenticated) {
-            const loginBtn = document.querySelector('.login-btn');
-            if (loginBtn) {
-                loginBtn.textContent = 'Account';
-                // You might want to change the href too
-                // loginBtn.href = "account.html";
-            }
-        }
-        */
 
         return data; // Return the data for potential further use
 
