@@ -12,13 +12,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 link.style.display = 'none';
             });
             
+            /*
             // Hide auth status message until we have real data
             const authStatusElement = document.getElementById('auth-status');
             if (authStatusElement) {
                 // Make it invisible but preserve layout space
                 authStatusElement.style.visibility = 'hidden';
             }
-            
+            */
+
             // Setup mobile menu functionality after navbar loads
             setupMobileMenu();
             
