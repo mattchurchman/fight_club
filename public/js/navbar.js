@@ -29,7 +29,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Show the auth status once we have data
                 console.log('here2')
                 console.log('authStatusElement: ', authStatusElement)
-                console.log('bool: ', authStatusElement ? authStatusElement : "No username")
                 if (authStatusElement) {
                     authStatusElement.style.visibility = 'visible';
                     
@@ -87,6 +86,7 @@ async function checkAuthStatus() {
         const data = await response.json();
         
         // Update auth status display only now that we have data
+        console.log('checkAuth: ', data.username)
         if (authStatusElement) {
             authStatusElement.textContent = data.authenticated 
                 ? `Logged in as: ${data.username}` 
@@ -106,7 +106,8 @@ async function checkAuthStatus() {
                 link.style.display = 'none';
             });
         }
-        
+
+        /*
         // Update login button if user is authenticated
         if (data.authenticated) {
             const loginBtn = document.querySelector('.login-btn');
@@ -116,6 +117,7 @@ async function checkAuthStatus() {
                 // loginBtn.href = "account.html";
             }
         }
+        */
 
         return data; // Return the data for potential further use
 
