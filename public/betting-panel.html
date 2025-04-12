@@ -265,10 +265,10 @@
                 
                 // Populate fights data
                 console.log('betData: ', betData)
-                console.log('user bets: ',betData.userBets)
-                if (betData.userBets) {
-                    for (const fightId in betData.userBets) {
-                        const bet = betData.userBets[fightId];
+                console.log('userBets: ',betData.bets.userBets)
+                if (betData.bets.userBets) {
+                    for (const fightId in betData.bets.userBets) {
+                        const bet = betData.bets.userBets[fightId];
                         
                         // Make sure the fight still exists in the current card
                         if (userBets[fightId]) {
