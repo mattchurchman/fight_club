@@ -252,7 +252,7 @@
                 // Add a notification to inform the user they're editing an existing bet
                 const notification = document.createElement('div');
                 notification.className = 'existing-bet-notification';
-                notification.style.backgroundColor = '#f0f8ff';
+                notification.style.backgroundColor = '#174a75';
                 notification.style.padding = '10px';
                 notification.style.marginBottom = '15px';
                 notification.style.borderRadius = '5px';
@@ -264,6 +264,8 @@
                 fightCard.insertBefore(notification, fightCard.firstChild);
                 
                 // Populate fights data
+                console.log('betData: ', betData)
+                console.log('user bets: ',betData.userBets)
                 if (betData.userBets) {
                     for (const fightId in betData.userBets) {
                         const bet = betData.userBets[fightId];
