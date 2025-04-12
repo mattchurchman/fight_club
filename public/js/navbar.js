@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
     console.log('DOM Content Loaded');
+    
     // First load the navbar HTML
     fetch("/components/navbar.html")
         .then(response => response.text())
@@ -25,22 +26,43 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.error("Error in setupMobileMenu:", error);
             }
             
-            // Critical fix: Ensure checkAuthStatus is properly executed
             console.log('here2');
             console.log('authStatusElement exists:', !!authStatusElement);
             
-            // Use a deliberate function call instead of relying on promise chaining
-            try {
-                // Force the function to execute synchronously first
-                const authPromise = runAuthCheck();
-                
-                // Then handle the async result
-                authPromise
-                    .then(result => {
-                        console.log('Auth check completed with result:', result);
+            // FINAL FIX: Force direct function execution with explicit error handling
+            console.log('Attempting direct function execution');
+            
+            // Use setTimeout to ensure this runs in a new stack frame
+            setTimeout(() => {
+                try {
+                    console.log('Starting manual auth check');
+                    
+                    // Direct function execution - no promises or async handling yet
+                    const authStatusElement = document.getElementById('auth-status');
+                    console.log('here3 - direct call');
+                    
+                    // Make fetch request without using await
+                    console.log('Attempting to fetch auth status directly');
+                    fetch('/api/auth/status', {
+                        method: 'GET',
+                        credentials: 'include',
+                        cache: 'no-store'
+                    })
+                    .then(response => {
+                        console.log('Direct fetch response received:', response.status);
+                        if (!response.ok) {
+                            throw new Error(`Server responded with status ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Auth data received directly:', data);
                         
-                        // Show the auth status once we have data
+                        // Update auth status display
                         if (authStatusElement) {
+                            authStatusElement.textContent = data.authenticated 
+                                ? `Logged in as: ${data.username}` 
+                                : 'Not logged in';
                             authStatusElement.style.visibility = 'visible';
                             
                             // Add a subtle fade-in effect
@@ -49,32 +71,48 @@ document.addEventListener("DOMContentLoaded", function () {
                             setTimeout(() => {
                                 authStatusElement.style.opacity = '1';
                             }, 10);
+                            
+                            console.log('Auth status element updated directly');
+                        }
+                        
+                        // Handle admin links visibility
+                        const authLinks = document.querySelectorAll('.admin');
+                        console.log('Admin links found directly:', authLinks.length);
+                        
+                        if (data.authenticated && data.username === 'Church') {
+                            authLinks.forEach(link => {
+                                link.style.display = 'inline';
+                            });
+                            console.log('Admin links displayed for user Church');
+                        } else {
+                            authLinks.forEach(link => {
+                                link.style.display = 'none';
+                            });
+                            console.log('Admin links hidden');
                         }
                     })
                     .catch(error => {
-                        console.error("Error during auth status handling:", error);
+                        console.error('Error in direct auth check:', error);
+                        
+                        // Handle error state
+                        if (authStatusElement) {
+                            authStatusElement.textContent = 'Authentication error';
+                            authStatusElement.style.visibility = 'visible';
+                        }
+                        
+                        const authLinks = document.querySelectorAll('.admin');
+                        authLinks.forEach(link => {
+                            link.style.display = 'none';
+                        });
                     });
-            } catch (error) {
-                console.error("Critical error initiating auth check:", error);
-            }
+                    
+                } catch (error) {
+                    console.error('Critical error in direct auth check execution:', error);
+                }
+            }, 200); // Small delay to ensure DOM is ready
         })
         .catch(error => console.error("Error loading navbar:", error));
 });
-
-// This function ensures checkAuthStatus is actually called
-async function runAuthCheck() {
-    console.log('runAuthCheck started - ensuring auth check executes');
-    
-    try {
-        // Force execution of the checkAuthStatus function
-        const result = await checkAuthStatus();
-        console.log('Auth check function completed execution');
-        return result;
-    } catch (error) {
-        console.error('Error in auth check wrapper:', error);
-        throw error;
-    }
-}
 
 // Setup hamburger menu functionality
 function setupMobileMenu() {
@@ -101,82 +139,6 @@ function setupMobileMenu() {
     }
 }
 
-// Auth status check function
-async function checkAuthStatus() {
-    console.log('here3');
-    
-    // Check if auth-status element exists
-    const authStatusElement = document.getElementById('auth-status');
-    console.log('here4: authStatusElement exists:', !!authStatusElement);
-    
-    try {
-        // Make the fetch request
-        console.log('Attempting to fetch auth status');
-        const response = await fetch('/api/auth/status', {
-            method: 'GET',
-            credentials: 'include', // Ensures cookies are sent with request
-            cache: 'no-store' // Prevent caching of authentication status
-        });
-
-        console.log('Fetch response received:', response.status);
-        
-        if (!response.ok) {
-            throw new Error(`Server responded with status ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('here5: Auth data received:', data);
-        
-        // Update auth status display only now that we have data
-        if (authStatusElement) {
-            authStatusElement.textContent = data.authenticated 
-                ? `Logged in as: ${data.username}` 
-                : 'Not logged in';
-            console.log('Auth status element updated');
-        } else {
-            console.warn('Auth status element not found when updating content');
-        }
-
-        // Handle admin links visibility
-        const authLinks = document.querySelectorAll('.admin');
-        console.log('Admin links found:', authLinks.length);
-        
-        // Only show admin links for user "Church" when authenticated
-        if (data.authenticated && data.username === 'Church') {
-            authLinks.forEach(link => {
-                link.style.display = 'inline';
-            });
-            console.log('Admin links displayed for user Church');
-        } else {
-            authLinks.forEach(link => {
-                link.style.display = 'none';
-            });
-            console.log('Admin links hidden');
-        }
-
-        return data; // Return the data for potential further use
-
-    } catch (error) {
-        console.error('Error checking authentication:', error);
-        
-        // Set error state
-        if (authStatusElement) {
-            authStatusElement.textContent = 'Authentication error';
-            console.log('Auth status set to error state');
-        } else {
-            console.warn('Auth status element not found when setting error state');
-        }
-        
-        // Ensure admin links stay hidden on error
-        const authLinks = document.querySelectorAll('.admin');
-        authLinks.forEach(link => {
-            link.style.display = 'none';
-        });
-        
-        return { authenticated: false }; // Return default state
-    }
-}
-
 // Logout function
 function logout() {
     console.log('Logout function called');
@@ -187,10 +149,8 @@ function logout() {
     .then(response => {
         console.log('Logout response received:', response.status);
         if (response.ok) {
-            // Force refresh auth status after logout
-            runAuthCheck().then(() => {
-                window.location.href = '/';  // Redirect to home page after logout
-            });
+            // Perform page redirect after successful logout
+            window.location.href = '/';
         } else {
             console.error('Logout failed');
         }
