@@ -67,6 +67,7 @@
         let remainingTokens = 1000;
         let eventTitle = "UFC Betting Panel";
         let existingBetData = null; // Add variable to store existing bet data
+        let username = null
         
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
@@ -93,7 +94,8 @@
                 }
                 
                 const data = await response.json();
-                console.log('auth status: ', data)
+                username = response.username
+                console.log('username: ', username)
                 return data.authenticated;
             } catch (error) {
                 console.error('Error checking authentication status:', error);
@@ -152,19 +154,6 @@
                     return null;
                 }
                 
-                // Get the current username
-                const userResponse = await fetch('/api/user/current', {
-                    method: 'GET',
-                    credentials: 'include'
-                });
-                
-                if (!userResponse.ok) {
-                    throw new Error('Failed to get current user');
-                }
-                
-                const userData = await userResponse.json();
-                const username = userData.username;
-                console.log('user current: ', username)
                 
                 // Now fetch the bet data
                 const response = await fetch(`/api/user-bets/${username}/${encodeURIComponent(eventTitle)}`, {
