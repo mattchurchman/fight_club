@@ -69,9 +69,10 @@ function setupMobileMenu() {
 
 // Auth status check function
 async function checkAuthStatus() {
+    console.log('here3')
     try {
         const authStatusElement = document.getElementById('auth-status');
-        
+        console.log('here4')
         // Make the fetch request
         const response = await fetch('/api/auth/status', {
             method: 'GET',
@@ -84,7 +85,7 @@ async function checkAuthStatus() {
         }
 
         const data = await response.json();
-        
+        console.log('here5')
         // Update auth status display only now that we have data
         console.log('checkAuth: ', data.username)
         if (authStatusElement) {
