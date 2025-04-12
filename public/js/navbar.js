@@ -20,13 +20,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 authStatusElement.style.visibility = 'hidden';
             }
             */
-
+            console.log('here')
             // Setup mobile menu functionality after navbar loads
             setupMobileMenu();
-            
+            console.log('here1')
             // Only after navbar is loaded, check auth status
             checkAuthStatus().then(() => {
                 // Show the auth status once we have data
+                console.log('here2')
                 if (authStatusElement) {
                     authStatusElement.style.visibility = 'visible';
                     
