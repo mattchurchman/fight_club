@@ -303,8 +303,8 @@
                 }
                 
                 // Populate confidence order
-                if (betData.confidenceOrder && Array.isArray(betData.confidenceOrder)) {
-                    confidenceOrder = [...betData.confidenceOrder];
+                if (betData.bets.confidenceOrder && Array.isArray(betData.bets.confidenceOrder)) {
+                    confidenceOrder = [...betData.bets.confidenceOrder];
                     
                     // Reorder the DOM elements
                     const confidenceList = document.getElementById('confidence-list');
@@ -325,10 +325,10 @@
                 }
                 
                 // Populate bleed pick
-                if (betData.bleedPick && betData.bleedPick.fightId && betData.bleedPick.fighterId) {
+                if (betData.bets.bleedPick && betData.bets.bleedPick.fightId && betData.bets.bleedPick.fighterId) {
                     bleedPick = {
-                        fightId: parseInt(betData.bleedPick.fightId),
-                        fighterId: parseInt(betData.bleedPick.fighterId)
+                        fightId: parseInt(betData.bets.bleedPick.fightId),
+                        fighterId: parseInt(betData.bets.bleedPick.fighterId)
                     };
                     
                     // Update the bleed selection dropdowns
