@@ -87,6 +87,7 @@ async function checkAuthStatus() {
                 ? `Logged in as: ${data.username}` 
                 : 'Not logged in';
         }
+        console.log('authStatusElement: ', authStatusElement.textContent)
 
         // Handle admin links visibility
         const authLinks = document.querySelectorAll('.admin');

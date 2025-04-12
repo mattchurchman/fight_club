@@ -95,7 +95,7 @@
                 
                 const data = await response.json();
                 username = data.username
-                console.log('username: ', username)
+
                 return data.authenticated;
             } catch (error) {
                 console.error('Error checking authentication status:', error);
@@ -116,7 +116,6 @@
                 }
                 
                 const data = await response.json();
-                console.log('event started: ',data)
                 return data.exists;
             } catch (error) {
                 console.error('Error checking event start:', error);
@@ -189,14 +188,11 @@
                 
                 const data = await response.json();
                 jsonString = JSON.stringify(data);
-                console.log('card latest:', jsonString);
                 
                 // Check for existing bet data
                 const authenticated = await checkAuthStatus();
                 if (authenticated && data.title) {
-                    console.log('event title: ', data.title)
                     existingBetData = await fetchExistingBetData(data.title);
-                    console.log('existing bet data:', existingBetData);
                 }
                 
                 loadFightCardData();
@@ -264,8 +260,6 @@
                 fightCard.insertBefore(notification, fightCard.firstChild);
                 
                 // Populate fights data
-                console.log('betData: ', betData)
-                console.log('userBets: ',betData.bets.userBets)
                 if (betData.bets.userBets) {
                     for (const fightId in betData.bets.userBets) {
                         const bet = betData.bets.userBets[fightId];
