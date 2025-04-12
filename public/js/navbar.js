@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
+    console.log('DOM Content Loaded');
     // First load the navbar HTML
     fetch("/components/navbar.html")
         .then(response => response.text())
@@ -24,39 +25,56 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.error("Error in setupMobileMenu:", error);
             }
             
-            // Only after navbar is loaded, check auth status with a slight delay
-            setTimeout(() => {
-                try {
-                    console.log('here2');
-                    console.log('authStatusElement exists:', !!authStatusElement);
-                    
-                    checkAuthStatus()
-                        .then(() => {
-                            console.log('Auth status check completed successfully');
-                            // Show the auth status once we have data
-                            if (authStatusElement) {
-                                authStatusElement.style.visibility = 'visible';
-                                
-                                // Add a subtle fade-in effect
-                                authStatusElement.style.opacity = '0';
-                                authStatusElement.style.transition = 'opacity 0.3s ease';
-                                setTimeout(() => {
-                                    authStatusElement.style.opacity = '1';
-                                }, 10);
-                            } else {
-                                console.warn('Auth status element not found after auth check');
-                            }
-                        })
-                        .catch(error => {
-                            console.error("Error during auth status check:", error);
-                        });
-                } catch (error) {
-                    console.error("Error initiating auth status check:", error);
-                }
-            }, 100); // Small delay to ensure DOM is fully processed
+            // Critical fix: Ensure checkAuthStatus is properly executed
+            console.log('here2');
+            console.log('authStatusElement exists:', !!authStatusElement);
+            
+            // Use a deliberate function call instead of relying on promise chaining
+            try {
+                // Force the function to execute synchronously first
+                const authPromise = runAuthCheck();
+                
+                // Then handle the async result
+                authPromise
+                    .then(result => {
+                        console.log('Auth check completed with result:', result);
+                        
+                        // Show the auth status once we have data
+                        if (authStatusElement) {
+                            authStatusElement.style.visibility = 'visible';
+                            
+                            // Add a subtle fade-in effect
+                            authStatusElement.style.opacity = '0';
+                            authStatusElement.style.transition = 'opacity 0.3s ease';
+                            setTimeout(() => {
+                                authStatusElement.style.opacity = '1';
+                            }, 10);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error during auth status handling:", error);
+                    });
+            } catch (error) {
+                console.error("Critical error initiating auth check:", error);
+            }
         })
         .catch(error => console.error("Error loading navbar:", error));
 });
+
+// This function ensures checkAuthStatus is actually called
+async function runAuthCheck() {
+    console.log('runAuthCheck started - ensuring auth check executes');
+    
+    try {
+        // Force execution of the checkAuthStatus function
+        const result = await checkAuthStatus();
+        console.log('Auth check function completed execution');
+        return result;
+    } catch (error) {
+        console.error('Error in auth check wrapper:', error);
+        throw error;
+    }
+}
 
 // Setup hamburger menu functionality
 function setupMobileMenu() {
@@ -170,7 +188,7 @@ function logout() {
         console.log('Logout response received:', response.status);
         if (response.ok) {
             // Force refresh auth status after logout
-            checkAuthStatus().then(() => {
+            runAuthCheck().then(() => {
                 window.location.href = '/';  // Redirect to home page after logout
             });
         } else {
