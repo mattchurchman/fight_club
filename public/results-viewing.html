@@ -502,7 +502,8 @@
                 const betFighter = bet.fighter === 1 ? fight.fighter1.name : fight.fighter2.name;
                 const resultFighter = result.winner === 1 ? fight.fighter1.name : fight.fighter2.name;
                 const method = victoryMethods.find(m => m.id === result.method).name;
-                const firstBlood = result.firstBleed === 1 ? fight.fighter1.name : fight.fighter2.name;
+                //const firstBlood = result.firstBleed === 1 ? fight.fighter1.name : fight.fighter2.name;
+                const firstBlood = result.firstBleed == null ? 'N/A' : result.firstBleed === 1 ? fight.fighter1.name : fight.fighter2.name;
                 
                 row.innerHTML = `
                     <td>
